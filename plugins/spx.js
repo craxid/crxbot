@@ -1,4 +1,4 @@
-const { scrapeSPX } = require('../lib/spx.js');
+const { cekSPX } = require('../lib/resapi.js');
 
 // Fungsi helper untuk jeda (delay)
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -18,7 +18,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     await sleep(5000);
     
     // Panggil scraper
-    let res = await scrapeSPX(resi);
+    let res = await cekSPX(resi);
     
     if (!res.status) {
         // Jika gagal, edit pesan awal menjadi pesan error

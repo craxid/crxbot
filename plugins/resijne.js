@@ -1,4 +1,4 @@
-const { cekResiJNE } = require('../lib/resi');
+const { cekJNE } = require('../lib/resapi.js');
 
 // Fungsi helper untuk merapihkan tanggal
 const formatTanggal = (tanggal) => {
@@ -39,7 +39,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     await sleep(5000);
     
     // Panggil scraper dengan 2 argumen
-    let res = await cekResiJNE(resi, verifyCode);
+    let res = await cekJNE(resi, verifyCode);
     
     if (!res.success) {
         // Jika gagal, edit pesan awal menjadi pesan error
