@@ -1,6 +1,6 @@
 const util = require('util');
 const axios = require('axios'); // Tambahkan module axios
-const { link_gdrive } = require('../lib/gdrive.js'); 
+const { gdrive } = require('../lib/resapi.js'); 
 
 function tipe_mime(nama_file, mime_cadangan) {
     const ekstensi = nama_file.split('.').pop().toLowerCase();
@@ -37,7 +37,7 @@ let handler = async (m, { conn, text, usedPrefix: awalan, command: perintah }) =
         await conn.sendMessage(m.chat, { react: { text: '⏳', key: m.key } });
         if (typeof wait !== 'undefined') m.reply(wait);
 
-        const data_drive = await link_gdrive(id_file);
+        const data_drive = await gdrive(text.trim());
 
         const batas_ukuran = 200 * 1024 * 1024; 
         if (data_drive.size_bytes > batas_ukuran) {

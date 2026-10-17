@@ -1,4 +1,4 @@
-const Terabox = require('../lib/tera.js');
+const { Terabox } = require('../lib/resapi.js');
 const mime = require('mime-types');
 
 // Cookie sudah terisi otomatis dari data yang Anda berikan
@@ -26,7 +26,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
   m.reply(global.wait || '⏳ Sedang mengekstrak data dari Terabox...');
 
   try {
-    const tera = new Terabox(TERABOX_COOKIE);
+    const tera = new Terabox();
     const files = await tera.extract(link);
 
     if (!files || files.length === 0) {
