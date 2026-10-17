@@ -1,0 +1,33 @@
+let handler = async (m, { conn, text, participants }) => {
+  let args = text.split('\n').map(arg => arg.trim())
+  let name = args[0]
+  let values = args.slice(1)
+
+  if (!name) {
+    return m.reply('Tutorial: .polling2 nama\n value\n\nContoh: .polling2 *JUDUL*\nList1\nList2')
+  }
+
+  if (values.length < 2) {
+    return m.reply('Harap berikan setidaknya dua nilai untuk jajak pendapat')
+  }
+
+  let poll = {
+    name: name,
+    values: values,
+    selectableCount: true
+  }
+
+  conn.sendMessage(m.chat, {
+    poll: poll, mentions: participants.map(a => a.id)
+  })
+
+  //m.reply(`Poll *${name}* telah dibuat, dengan opsi: *${values.join(', ')}*`)
+}
+
+handler.command = /^(poll2|polling2)$/i
+handler.help = ['poll2']
+handler.tags = ['tools']
+handler.register = false
+handler.limit = false
+
+module.exports = handler

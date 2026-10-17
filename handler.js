@@ -1,0 +1,1037 @@
+const simple = require('./lib/simple')
+const util = require('util')
+
+const isNumber = x => typeof x === 'number' && !isNaN(x)
+const delay = ms => isNumber(ms) && new Promise(resolve => setTimeout(resolve, ms))
+
+module.exports = {
+    async handler(chatUpdate) {
+        if (global.db.data == null) await loadDatabase()
+        this.msgqueque = this.msgqueque || []
+        // console.log(chatUpdate)
+        if (!chatUpdate) return
+        // if (chatUpdate.messages.length > 2 || !chatUpdate.messages.length) return
+        if (chatUpdate.messages.length > 1) console.log(chatUpdate.messages)
+        let m = chatUpdate.messages[chatUpdate.messages.length - 1]
+        if (!m) return
+        //console.log(JSON.stringify(m, null, 4))
+        // ===== FIX LID -> PN (CraXID, 2026-10-03) =====
+        // WhatsApp kini mengirim sender sebagai @lid. smsg memakai conn.getJid yang
+        // resolve-nya fire-and-forget -> pesan PERTAMA m.sender masih @lid mentah
+        // (nomor tidak kedetek, isROwner gagal, record DB kepisah), baru benar di
+        // pesan kedua setelah cache conn.isLid terisi.
+        // Solusi: await lidMapping.getPNForLID DI SINI, sebelum smsg menghitung
+        // m.sender, lalu selipkan hasilnya ke participantPn/senderPn yang memang
+        // dicek duluan oleh smsg (lib/simple.js). Cache conn.isLid ikut terisi
+        // sehingga pemanggilan getJid lain (chat, mention, quoted) ikut benar.
+        let _lidRaw = ''
+        try {
+            const _raw = (m && m.key && (m.key.participant || m.key.senderLid || m.key.remoteJid)) || ''
+            if (typeof _raw === 'string' && _raw.includes('@lid') && this.getJidAsync) {
+                const _pn = await this.getJidAsync(_raw).catch(() => null)
+                if (_pn && typeof _pn === 'string' && _pn.endsWith('@s.whatsapp.net')) {
+                    _lidRaw = _raw
+                    if (m.key.participant && m.key.participant.includes('@lid')) m.key.participantPn = _pn
+                    else if (m.key.senderLid && m.key.senderLid.includes('@lid')) m.key.senderPn = _pn
+                    else if (m.key.remoteJid && m.key.remoteJid.includes('@lid')) m.key.senderPn = _pn
+                }
+            }
+        } catch {}
+        try {
+            m = simple.smsg(this, m) || m
+            if (!m) return
+            // console.log(m)
+            m.exp = 0
+            m.limit = false
+            try {
+                let user = global.db.data.users[m.sender]
+                if (typeof user !== 'object') global.db.data.users[m.sender] = {}
+                if (user) {
+                    if (!isNumber(user.healt)) user.healt = 100
+                    if (!isNumber(user.health)) user.health = 100
+                    if (!isNumber(user.energi)) user.energi = 100
+                    if (!isNumber(user.title)) user.title = 0
+                    if (!isNumber(user.stamina)) user.stamina = 100
+                    if (!isNumber(user.level)) user.level = 0
+                    if (!('titlein' in user)) user.titlein = 'Belum Ada'
+                    if (!('pasangan' in user)) user.pasangan = ''
+                    if (!('location' in user)) user.location = 'Gubuk'
+                    if (!('waifu' in user)) user.waifu = 'Belum Di Set'
+                    if (!isNumber(user.followers)) user.followers = 0
+                    if (!isNumber(user.exp)) user.exp = 0
+                    if (!isNumber(user.pc)) user.pc = 0
+                    if (!isNumber(user.ojekk)) user.ojekk = 0
+                    if (!isNumber(user.polisi)) user.polisi = 0
+                    if (!isNumber(user.dokter)) user.dokter = 0
+                    if (!isNumber(user.limit)) user.limit = 100
+                    if (!isNumber(user.lastclaim)) user.lastclaim = 0
+                    if (!isNumber(user.lasthitman)) user.lasthitman = 0
+                    if (!isNumber(user.judilast)) user.judilast = 0
+                    if (!isNumber(user.lastnambang)) user.lastnambang = 0
+                    if (!isNumber(user.lastnebang)) user.lastnebang = 0
+                    if (!isNumber(user.lastkerja)) user.lastkerja = 0
+                    if (!isNumber(user.lastmaling)) user.lastmaling = 0
+                    if (!isNumber(user.lastbunuhi)) user.lastbunuhi = 0
+                    if (!isNumber(user.lastmancing)) user.lastmancing = 0
+                    if (!isNumber(user.money)) user.money = 0
+                    if (!isNumber(user.tambang)) user.tambang = 0
+                    
+                    //Tambahan rpg
+                    if (!isNumber(user.litecoin)) user.litecoin = 0
+                    if (!isNumber(user.tiketcoin)) user.tiketcoin = 0
+                    if (!isNumber(user.poin)) user.poin = 0
+                    if (!isNumber (user.bank)) user.bank = 0
+                    
+                    if (!isNumber(user.botol)) user.botol = 0
+                    if (!isNumber(user.kardus)) user.kardus = 0
+                    if (!isNumber(user.kaleng)) user.kaleng = 0
+                    if (!isNumber(user.aqua)) user.aqua = 0
+                    if (!isNumber(user.diamond)) user.diamond = 0
+                    if (!isNumber(user.emerald)) user.emerald = 0
+                    if (!isNumber(user.berlian)) user.berlian = 0
+                    if (!isNumber(user.iron)) user.iron = 0
+                    if (!isNumber(user.emas)) user.emas = 0
+        
+                    if (!isNumber(user.common)) user.common = 0
+                    if (!isNumber(user.uncommon)) user.uncommon = 0
+                    if (!isNumber(user.mythic)) user.mythic = 0
+                    if (!isNumber(user.legendary)) user.legendary = 0
+                    if (!isNumber(user.pet)) user.pet = 0
+                    //rpg meracik
+                    if (!isNumber(user.cupon)) user.cupon = 0
+                    if (!isNumber(user.eleksirb)) user.eleksirb = 0
+                
+                    if (!isNumber(user.potion)) user.potion = 0
+                    if (!isNumber(user.sampah)) user.sampah = 0
+                    if (!isNumber(user.pancingan)) user.pancingan = 0
+                    if (!isNumber(user.totalPancingan)) user.totalPancingan = 0
+                    //penambah stamina
+                    if (!isNumber(user.apel)) user.apel = 0
+                    
+                    if (!isNumber(user.ayambakar)) user.ayambakar = 0
+                    if (!isNumber(user.gulai)) user.gulai = 0
+                    if (!isNumber(user.rendang)) user.rendang = 0
+                    if (!isNumber(user.ayamgoreng)) user.ayamgoreng = 0
+                    if (!isNumber(user.oporayam)) user.oporayam = 0
+                    if (!isNumber(user.steak)) user.steak = 0
+                    if (!isNumber(user.babipanggang)) user.babipanggang = 0
+                    if (!isNumber(user.ikanbakar)) user.ikanbakar = 0
+                    if (!isNumber(user.nilabakar)) user.nilabakar = 0
+                    if (!isNumber(user.lelebakar)) user.lelebakar = 0
+                    if (!isNumber(user.bawalbakar)) user.bawalbakar = 0
+                    if (!isNumber(user.udangbakar)) user.udangbakar = 0
+                    if (!isNumber(user.pausbakar)) user.pausbakar = 0
+                    if (!isNumber(user.kepitingbakar)) user.kepitingbakar = 0
+                    if (!isNumber(user.soda)) user.soda = 0
+                    if (!isNumber(user.vodka)) user.vodka = 0
+                    if (!isNumber(user.ganja)) user.ganja = 0
+                    if (!isNumber(user.bandage)) user.bandage = 0
+                    if (!isNumber(user.sushi)) user.sushi = 0
+                    if (!isNumber(user.roti)) user.roti = 0
+                    //untuk masak
+                    if (!isNumber(user.coal)) user.coal = 0
+                    //tools
+                    if (!isNumber(user.umpan)) user.umpan = 0
+                   
+                    if (!isNumber(user.armor)) user.armor = 0
+                    if (!isNumber(user.armordurability)) user.armordurability = 0
+                    if (!isNumber(user.weapon)) user.weapon = 0
+                    if (!isNumber(user.sword)) user.sword = 0
+                    if (!isNumber(user.sworddurability)) user.sworddurability = 0
+                    if (!isNumber(user.pickaxe)) user.pickaxe = 0
+                    if (!isNumber(user.pickaxedurability)) user.pickaxedurability = 0
+                    if (!isNumber(user.fishingrod)) user.fishingrod = 0
+                    if (!isNumber(user.fishingroddurability)) user.fishingroddurability = 0
+                    if (!isNumber(user.katana)) user.katana = 0
+                    if (!isNumber(user.katanadurability)) user.katanadurability = 0
+                    if (!isNumber(user.bow)) user.bow = 0
+                    if (!isNumber(user.bowdurability)) user.bowdurability = 0
+                    if (!isNumber(user.axe)) user.axe = 0
+                    if (!isNumber(user.axedurability)) user.axedurability = 0
+                    if (!isNumber(user.pisau)) user.pisau = 0
+                    if (!isNumber(user.pisaudurability)) user.pisaudurability = 0
+                    
+                    if (!isNumber(user.kerjasatu)) user.kerjasatu = 0
+                    
+                    if (!isNumber(user.pekerjaansatu)) user.pekerjaansatu = 0
+                    if (!isNumber(user.pekerjaandua)) user.pekerjaandua = 0
+                    if (!isNumber(user.pekerjaantiga)) user.pekerjaantiga = 0
+                    
+                    if (!isNumber(user.kucing)) user.kucing = 0
+                    if (!isNumber(user.kucinglastclaim)) user.kucinglastclaim = 0
+                    if (!isNumber(user.kucingexp)) user.kucingexp = 0
+                    if (!isNumber(user.kuda)) user.kuda = 0
+                    if (!isNumber(user.rubah)) user.rubah = 0
+                    if (!isNumber(user.rubahlastclaim)) user.rubahlastclaim = 0
+                    if (!isNumber(user.rubahexp)) user.rubahexp = 0
+                    if (!isNumber(user.anjing)) user.anjing = 0
+                    if (!isNumber(user.anjinglastclaim)) user.anjinglastclaim = 0
+                    if (!isNumber(user.anjingexp)) user.anjingexp = 0
+                    if (!isNumber(user.serigalalastclaim)) user.serigalalastclaim = 0
+                    if (!isNumber(user.phonixlastclaim)) user.phonixlastclaim = 0
+                    if (!isNumber(user.phonixexp)) user.phonixexp = 0
+                    
+                    if (!isNumber(user.makananpet)) user.makananpet = 0
+                    if (!isNumber(user.makanannaga)) user.makanannaga = 0
+                    if (!isNumber(user.makananphonix)) user.makananphonix = 0
+                    if (!isNumber(user.makanangriffin)) user.makanangriffin = 0
+                    if (!isNumber(user.makanancentaur)) user.makanancentaur = 0
+        
+                    if (!isNumber(user.warn)) user.warn = 0
+                    if (!('banned' in user)) user.banned = false
+        
+                    if (!isNumber(user.afk)) user.afk = -1
+                    if (!'afkReason' in user) user.afkReason = ''
+                
+                //PET
+                    if (!isNumber(user.serigala)) user.serigala = 0
+                    if (!isNumber(user.serigalaexp)) user.serigalaexp = 0
+                    if (!isNumber(user.phonix)) user.phonix = 0
+                    if (!isNumber(user.griffin)) user.griffin = 0
+                    if (!isNumber(user.kyubi)) user.kyubi = 0
+                    if (!isNumber(user.centaur)) user.centaur = 0
+                    if (!isNumber(user.makananPet)) user.makananPet = 0
+        
+        
+                    if (!isNumber(user.kayu)) user.kayu = 0
+                    if (!isNumber(user.batu)) user.batu = 0
+                    if (!isNumber(user.string)) user.string = 0
+        
+                    //mancing
+                    if (!isNumber(user.paus)) user.paus = 0
+                     if (!isNumber(user.kepiting)) user.kepiting = 0
+                     if (!isNumber(user.gurita)) user.gurita = 0
+                     if (!isNumber(user.cumi)) user.cumi= 0
+                     if (!isNumber(user.buntal)) user.buntal = 0
+                     if (!isNumber(user.dory)) user.dory = 0
+                     if (!isNumber(user.lumba)) user.lumba = 0
+                     if (!isNumber(user.lobster)) user.lobster = 0
+                     if (!isNumber(user.hiu)) user.hiu = 0
+                     if (!isNumber(user.udang)) user.udang = 0
+                     if (!isNumber(user.ikan)) user.ikan = 0
+                     if (!isNumber(user.nila)) user.nila = 0
+                     if (!isNumber(user.bawal)) user.bawal = 0
+                     if (!isNumber(user.lele)) user.lele = 0
+                     if (!isNumber(user.orca)) user.orca = 0
+                        
+                     if (!isNumber(user.banteng)) user.banteng = 0
+                     if (!isNumber(user.harimau)) user.harimau = 0
+                     if (!isNumber(user.gajah)) user.gajah = 0
+                     if (!isNumber(user.kambing)) user.kambing = 0
+                     if (!isNumber(user.panda)) user.panda = 0
+                     if (!isNumber(user.buaya)) user.buaya = 0
+                     if (!isNumber(user.kerbau)) user.kerbau = 0
+                     if (!isNumber(user.sapi)) user.sapi = 0
+                     if (!isNumber(user.monyet)) user.monyet = 0
+                     if (!isNumber(user.babihutan)) user.babihutan = 0
+                     if (!isNumber(user.babi)) user.babi = 0
+                     if (!isNumber(user.ayam)) user.ayam = 0
+         
+                      if (!isNumber(user.lastadventure)) user.lastadventure = 0
+                      if (!isNumber(user.lastberburu)) user.lastberburu = 0
+                      if (!isNumber(user.lastdungeon)) user.lastdungeon = 0
+                      if (!isNumber(user.lasthunt)) user.lasthunt = 0
+                      if (!isNumber(user.lastrob)) user.lastrob = 0
+                      if (!isNumber(user.lastngojek)) user.lastngojek = 0
+                      if (!isNumber(user.lastberkebon)) user.lastberkebon = 0
+                      if (!isNumber(user.lastdagang)) user.lastdagang = 0
+                      if (!isNumber(user.lastturu)) user.lastturu = 0
+                      if (!isNumber(user.lastseen)) user.lastseen = 0
+                      if (!isNumber(user.lastbansos)) user.lastbansos = 0
+                      if (!('registered' in user)) user.registered = false
+                      if (!user.registered) {
+                      if (!('name' in user)) user.name = this.getName(m.sender)
+          
+                      if (!isNumber(user.apel)) user.apel = 0
+                      if (!isNumber(user.anggur)) user.anggur = 0
+                      if (!isNumber(user.jeruk)) user.jeruk = 0
+                      if (!isNumber(user.mangga)) user.mangga = 0
+                      if (!isNumber(user.pisang)) user.pisang = 0
+                      if (!isNumber(user.kayu)) user.kayu = 0
+                      if (!isNumber(user.bibitanggur)) user.bibitanggur = 0
+                      if (!isNumber(user.bibitpisang)) user.bibitpisang = 0
+                      if (!isNumber(user.bibitapel)) user.bibitapel = 0
+                      if (!isNumber(user.bibitmangga)) user.bibitmangga = 0
+                      if (!isNumber(user.bibitjeruk)) user.bibitjeruk = 0
+                     
+                      //sambung kata
+        
+                      
+                      if (!isNumber(user.age)) user.age = -1
+                      if (!isNumber(user.regTime)) user.regTime = -1
+                        
+        }
+                      if (!isNumber(user.level)) user.level = 0
+                      if (!user.job) user.job = 'Pengangguran'
+                      if (!isNumber(user.jobexp)) user.jobexp = 0
+                      if (!('jail' in user)) user.jail = false
+                      if (!('penjara' in user)) user.penjara = false
+                      if (!user.premium) user.premium = false
+                      if (!user.premiumTime) user.premiumTime= 0
+                      if (!user.vip) user.vip = 'tidak'
+                      if (!user.role) user.role = 'Newbie ㋡'
+                      if (!('autolevelup' in user)) user.autolevelup = true
+                  
+                      //demon slayer dan rpg baru
+                      if (!("skill" in user)) user.skill = ""
+                      if (!isNumber(user.attack)) user.attack = 0
+                      if (!isNumber(user.strenght)) user.strenght = 0
+                      if (!isNumber(user.speed)) user.speed = 0
+                      if (!isNumber(user.defense)) user.defense = 0
+                      if (!isNumber(user.dana)) user.dana = 0
+                      if (!isNumber(user.gopay)) user.gopay = 0
+                      if (!isNumber(user.ovo)) user.ovo = 0
+                      if (!isNumber(user.lastngaji)) user.lastngaji = 0
+                      if (!isNumber(user.lastdate)) user.lastdate = 0
+                      if (!isNumber(user.lastngepet)) user.lastngepet = 0
+                      if (!isNumber(user.lasttaxi)) user.lasttaxi = 0
+                      if (!isNumber(user.taxi)) user.taxi = 0  
+                      if (!isNumber(user.subscribers)) user.subscribers = 0
+                      if (!isNumber(user.viewers)) user.viewers = 0
+                      if (!isNumber(user.like)) user.like = 0
+                      if (!isNumber(user.playButton)) user.playButton = 0
+                   
+                  } else global.db.data.users[m.sender] = {
+                      taxi: 0,
+                      lasttaxi: 0,
+                      subscribers: 0,
+                      viewers: 0,
+                      like: 0,
+                      playButton: 0,
+                      healt: 100,
+                      health: 100,
+                      energi: 100,
+                      title: '',
+                      stamina : 100,
+                      level: 0,
+                      followers: 0,
+                      pasangan: '',
+                      location: 'Gubuk', 
+                      titlein: 'Belum Ada',
+                      waifu: 'Belum Di Set', 
+                      pc : 0,
+                      exp: 0,
+                      limit: 100,
+                      lastclaim: 0,
+                      judilast: 0,
+                      lastnambang: 0,
+                      lastnebang: 0,
+                      lastkerja: 0,
+                      lastmaling: 0,
+                      lastbunuhi: 0,
+                      lastmancing: 0,
+                      pancingan: 0,
+                      totalPancingan: 0,
+                      kardus: 0,
+                      botol: 0,
+                      kaleng: 0,
+                      money: 0,
+                      litecoin: 0,
+                      tiketcoin: 0,
+                      poin: 0,
+                      bank: 0,
+                      diamond: 0,
+                      emerald: 0,
+                      berlian: 0,
+                      iron: 0,
+                      emas: 0,
+                      common: 0,
+                      uncommon: 0,
+                      mythic: 0,
+                      legendary: 0,
+                      tambang: 0,
+                      ojekk: 0,
+                      polisi: 0,
+                      dokter: 0,
+                      //+ stamina
+                      coal: 0,
+                      ayambakar: 0,
+                      gulai: 0,
+                      rendang: 0,
+                      ayamgoreng: 0,
+                      oporayam: 0,
+                      steak: 0,
+                      babipanggang: 0,
+                      ikanbakar: 0,
+                      lelebakar: 0,
+                      nilabakar: 0,
+                      bawalbakar: 0,
+                      udangbakar: 0,
+                      pausbakar: 0,
+                      kepitingbakar: 0,
+                      soda: 0,
+                      vodka: 0,
+                      ganja: 0,
+                      bandage: 0,
+                      sushi: 0,
+                      roti: 0,
+                      //meracik
+                      cupon: 0,
+                      lastgemsclaim: 0,
+                      eleksirb: 0,
+                    //mancing
+                      paus: 0,
+                      kepiting: 0,
+                      gurita: 0,
+                      cumi: 0,
+                      buntal: 0,
+                      dory: 0,
+                      lumba: 0,
+                      lobster: 0,
+                      hiu: 0,
+                      lele: 0,
+                      nila: 0,
+                      bawal: 0,
+                      udang: 0,
+                      ikan: 0,
+                      orca: 0,
+                      banteng: 0,
+                      harimau: 0,
+                      gajah: 0,
+                      kambing: 0,
+                      panda: 0,
+                      buaya: 0,
+                      kerbau : 0,
+                      sapi: 0,
+                      monyet : 0,
+                      babihutan: 0,
+                      babi: 0,
+                      ayam: 0,
+                      apel: 20,
+                      pet: 0,
+                      potion: 0,
+                      sampah: 0,
+                      kucing: 0,
+                      kucinglastclaim: 0,
+                      kucingexp: 0,
+                      kuda: 0,
+                      rubah: 0,
+                      rubahlastclaim: 0,
+                      rubahexp: 0,
+                      anjing: 0,
+                      anjinglastclaim: 0,
+                      anjingexp: 0,
+                      griffin: 0,
+                      centaur: 0,
+                      serigala: 0,
+                      serigalalastclaim: 0,
+                      serigalaexp: 0,
+                      phonix: 0,
+                      phonixlastclaim: 0,
+                      phonixexp : 0,
+                      makanannaga: 0,
+                      makananphonix: 0,
+                      makanancentaur: 0,
+                      
+                      banned: false, 
+                      warn: 0,
+                      afk: -1,
+                      afkReason: '',
+                      makananpet: 0,
+                      makananPet: 0,
+                      kayu: 0,
+                      batu: 0,
+                      string: 0,
+                      umpan: 0,
+                      armor: 0,
+                      armordurability: 0,
+                      weapon: 0,
+                      sword: 0,
+                      sworddurability: 0,
+                      pickaxe: 0,
+                      pickaxedurability: 0,
+                      fishingrod: 0,
+                      fishingroddurability: 0,
+                      katana: 0,
+                      katanadurability: 0,
+                      bow: 0,
+                      bowdurability: 0,
+                      axe: 0,
+                      axedurability: 0,
+                      pisau: 0,
+                      pisaudurability: 0,                  
+                      kerjasatu: 0,
+                      pekerjaansatu: 0,
+                      pekerjaandua: 0,
+                      pekerjaantiga: 0,
+                      lastadventure: 0,
+                      lastberkebon: 0,
+                      lastberburu: 0,
+                      lastbansos: 0,
+                      lastdungeon: 0,
+                      lastdagang: 0,
+                      lasthunt: 0,
+                      lastrob: 0,
+                      lastdaang: 0,
+                      lastngojek: 0,
+                      lastturu: 0,
+                      lastseen: 0,
+                      registered: false,
+                      apel: 20,
+                      mangga: 0,
+                      jeruk: 0,
+                      name: this.getName(m.sender),
+                      age: -1,
+                      regTime: -1,
+                      premium: false,
+                      premiumTime: 0,
+                      vip: 'tidak', 
+                      job: 'Pengangguran', 
+                      jobexp: 0,
+                      jail: false, 
+                      penjara: false, 
+                      role: 'Newbie ㋡', 
+                      registered: false,
+                      name: this.getName(m.sender),
+                      age: -1,
+                      regTime: -1,
+                      autolevelup: false,
+                      
+                      skill: "",
+                      attack: 0,
+                      speed: 0,
+                      strenght: 0,
+                      defense: 0,
+                      ovo: 0,
+                      dana: 0,
+                      gopay: 0,
+                      lastngaji: 0,
+                      lastdate: 0,
+                      lastngepet: 0,
+                  }
+             let chat = global.db.data.chats[m.chat]
+            if (typeof chat !== 'object') global.db.data.chats[m.chat] = {}
+            if (chat) {
+                if (!('isBanned' in chat)) chat.isBanned = false
+                if (!('welcome' in chat)) chat.welcome = true
+                if (!isNumber(chat.welcometype)) chat.welcometype = 1
+                if (!('detect' in chat)) chat.detect = false
+                if (!('isBannedTime' in chat)) chat.isBannedTime = false
+                if (!('mute' in chat)) chat.mute = false
+                if (!('listStr' in chat)) chat.listStr = {}
+                if (!('sWelcome' in chat)) chat.sWelcome = 'Hai, @user!\nSelamat datang di grup @subject\n\n@desc'
+                if (!('sBye' in chat)) chat.sBye = 'Selamat tinggal @user!'
+                if (!('sPromote' in chat)) chat.sPromote = ''
+                if (!('sDemote' in chat)) chat.sDemote = ''
+                if (!('delete' in chat)) chat.delete = true
+                if (!('antiLink' in chat)) chat.antiLink = true
+                if (!('antiLinknokick' in chat)) chat.antiLinknokick = false
+                if (!('antiSticker' in chat)) chat.antiSticker = false
+                if (!('antiStickernokick' in chat)) chat.antiStickernokick = false
+                if (!('viewonce' in chat)) chat.viewonce = false
+                if (!('antiToxic' in chat)) chat.antiToxic = false
+                if (!isNumber(chat.expired)) chat.expired = 0
+                if (!("memgc" in chat)) chat.memgc = {}
+                if (!('antilinkig' in chat)) chat.antilinkig = false
+                if (!('antilinkignokick' in chat)) chat.antilinkignokick = false
+                if (!('antilinkfb' in chat)) chat.antilinkfb = false
+                if (!('antilinkfbnokick' in chat)) chat.antilinkfbnokick = false
+                if (!('antilinktwit' in chat)) chat.antilinktwit = false
+                if (!('antilinktwitnokick' in chat)) chat.antilinktwitnokick = false
+                if (!('antilinkyt' in chat)) chat.antilinkyt = false
+                if (!('antilinkytnokick' in chat)) chat.antilinkytnokick = false
+                if (!('antilinktele' in chat)) chat.antilinktele = false
+                if (!('antilinktelenokick' in chat)) chat.antilinktelenokick = false
+                if (!('antilinkwame' in chat)) chat.antilinkwame = false
+                if (!('antilinkwamenokick' in chat)) chat.antilinkwamenokick = false
+                if (!('antilinkall' in chat)) chat.antilinkall = false
+                if (!('antilinkallnokick' in chat)) chat.antilinkallnokick = false
+                if (!('antilinktt' in chat)) chat.antilinktt = false
+                if (!('antilinkttnokick' in chat)) chat.antilinkttnokick = false
+                if (!('antibot' in chat)) chat.antibot = false
+                if (!("rpg" in chat)) chat.rpg = false;
+                if (!("nsfw" in chat)) chat.nsfw = false;
+            } else global.db.data.chats[m.chat] = {
+                isBanned: false,
+                welcome: true,
+                welcometype: 1,
+                detect: false,
+                isBannedTime: false,
+                mute: false,
+                listStr: {},
+                sWelcome: 'Hai, @user!\nSelamat datang di grup @subject\n\n@desc',
+                sBye: 'Selamat tinggal @user!',
+                sPromote: '',
+                sDemote: '',
+                delete: false, 
+                antiLink: false,
+                antiLinknokick: false,
+                antiSticker: false, 
+                antiStickernokick: false, 
+                viewonce: false,
+                antiToxic: false,
+                antilinkig: false, 
+                antilinkignokick: false, 
+                antilinkyt: false, 
+                antilinkytnokick: false, 
+                antilinktwit: false, 
+                antilinktwitnokick: false, 
+                antilinkfb: false, 
+                antilinkfbnokick: false, 
+                antilinkall: false, 
+                antilinkallnokick: false, 
+                antilinkwame: false,
+                antilinkwamenokick: false, 
+                antilinktele: false, 
+                antilinktelenokick: false, 
+                antilinktt: false, 
+                antilinkttnokick: false, 
+                antibot: false, 
+                rpg: false,
+                
+            }
+            let memgc = global.db.data.chats[m.chat]?.memgc?.[m.sender];
+            if (typeof memgc !== 'object' || memgc === null) {
+                global.db.data.chats[m.chat] = global.db.data.chats[m.chat] || {};
+                global.db.data.chats[m.chat].memgc = global.db.data.chats[m.chat].memgc || {};
+                global.db.data.chats[m.chat].memgc[m.sender] = {};
+                memgc = global.db.data.chats[m.chat].memgc[m.sender];
+            }
+            if (memgc) {
+                if (!('blacklist' in memgc)) memgc.blacklist = false;
+                if (!('banned' in memgc)) memgc.banned = false;
+                if (!isNumber(memgc.bannedTime)) memgc.bannedTime = 0;
+                if (!isNumber(memgc.chat)) memgc.chat = 0;
+                if (!isNumber(memgc.chatTotal)) memgc.chatTotal = 0;
+                if (!isNumber(memgc.command)) memgc.command = 0;
+                if (!isNumber(memgc.commandTotal)) memgc.commandTotal = 0;
+                if (!isNumber(memgc.lastseen)) memgc.lastseen = 0;
+            } else {
+                global.db.data.chats[m.chat].memgc[m.sender] = {
+                    blacklist: false,
+                    banned: false,
+                    bannedTime: 0,
+                    chat: 0,
+                    chatTotal: 0,
+                    command: 0,
+                    commandTotal: 0,
+                    lastseen: 0
+                };
+            }
+            // ===== FIX LID: gabung record DB yang sempat kepisah (CraXID, 2026-10-03) =====
+            // Sebelum fix ini, user yang pesannya datang sebagai @lid tercatat dengan
+            // key @lid mentah di db.data.users. Kalau record lama itu masih ada,
+            // pindahkan field yang belum ada di record PN lalu hapus key lamanya.
+            try {
+                const _users = global.db && global.db.data && global.db.data.users
+                const _newRec = _users && _users[m.sender]
+                if (_lidRaw && _users && _newRec && _lidRaw !== m.sender && _users[_lidRaw] && typeof _users[_lidRaw] === 'object') {
+                    const _oldRec = _users[_lidRaw]
+                    for (const _k of Object.keys(_oldRec)) {
+                        if (_newRec[_k] === undefined) _newRec[_k] = _oldRec[_k]
+                    }
+                    delete _users[_lidRaw]
+                    console.log(`[LID Fix] merged DB record ${_lidRaw} -> ${m.sender}`)
+                }
+            } catch {}
+            } catch (e) {
+                console.error(e);
+            }
+            if (opts['nyimak']) return
+            if (!m.fromMe && opts['self']) return
+            if (opts['pconly'] && m.chat.endsWith('g.us')) return
+            if (opts['gconly'] && !m.chat.endsWith('g.us')) return
+            if (opts['swonly'] && m.chat !== 'status@broadcast') return
+            if (typeof m.text !== 'string') m.text = ''
+            if (opts['queque'] && m.text) {
+                this.msgqueque.push(m.id || m.key.id)
+                await delay(this.msgqueque.length * 1000)
+            }
+            for (let name in global.plugins) {
+                let plugin = global.plugins[name]
+                if (!plugin) continue
+                if (plugin.disabled) continue
+                if (!plugin.all) continue
+                if (typeof plugin.all !== 'function') continue
+                try {
+                    await plugin.all.call(this, m, chatUpdate)
+                } catch (e) {
+                    if (typeof e === 'string') continue
+                    console.error(e)
+                }
+            }
+        //if (m.id.startsWith('BAE5') && m.id.length === 16 || m.isBaileys && m.fromMe) return
+	        if (m.id.startsWith('BAE5') && m.id.length === 16 || m.isBaileys && m.fromMe) return;	
+            m.exp += Math.ceil(Math.random() * 10)
+
+            let usedPrefix
+            let _user = global.db.data && global.db.data.users && global.db.data.users[m.sender]
+
+            //let isROwner = [global.conn.user.jid, ...global.owner].map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net').includes(m.sender)
+            let isROwner = [global.conn.user.jid, ...global.owner]
+              .map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net')
+              .includes(
+                m.sender.endsWith('@lid') 
+                  ? conn.getJid(m.sender)?.replace(/[^0-9]/g, '') + '@s.whatsapp.net' 
+                  : m.sender.replace(/[^0-9]/g, '') + '@s.whatsapp.net'
+              );
+            let isOwner = isROwner || m.fromMe
+            let isMods = isOwner || global.mods.map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net').includes(m.sender)
+            let isPrems = isROwner || (db.data.users[m.sender].premiumTime > 0 || db.data.users[m.sender].premium) ||
+              (Array.isArray(global.prems) && global.prems.map(v => String(v).replace(/[^0-9]/g, '')).includes(m.sender.replace(/[^0-9]/g, '')))
+           
+            // const groupMetadata = (m.isGroup ? (conn.chats[m.chat] || {}).metadata || (await this.groupMetadata(m.chat).catch((_) => null)) : {}) || {};
+            // const participants = (m.isGroup ? groupMetadata.participants : []) || [];
+            // const user = (m.isGroup ? participants.find((u) => conn.getJid(u.id) === m.sender) : {}) || {}; // User Data
+            // const bot = (m.isGroup ? participants.find((u) => conn.getJid(u.id) == this.user.jid) : {}) || {}; // Your Data
+            // const isRAdmin = user?.admin == 'superadmin' || false;
+            // const isAdmin = isRAdmin || user?.admin == 'admin' || false; // Is User Admin?
+            // const isBotAdmin = bot?.admin || false; // Are you Admin?
+            
+            const groupMetadata = (m.isGroup ? (conn.chats[m.chat] || {}).metadata || (await this.groupMetadata(m.chat).catch((_) => null)) : {}) || {};
+            const participants = (m.isGroup ? groupMetadata.participants : []) || [];
+
+            const user = participants.find((u) => (u.jid || u.phoneNumber || u.id) === m.sender) || {};
+            const bot  = participants.find((u) => (u.jid || u.phoneNumber || u.id) === this.user.jid) || {};
+
+            const isRAdmin    = user?.admin === 'superadmin' || false;
+            const isAdmin     = isRAdmin || user?.admin === 'admin' || false;
+            const isBotAdmin  = bot?.admin === 'admin' || bot?.admin === 'superadmin' || false;
+            for (let name in global.plugins) {
+                let plugin = global.plugins[name]
+                if (!plugin) continue
+                if (plugin.disabled) continue
+                if (!opts['restrict']) if (plugin.tags && plugin.tags.includes('admin')) {
+                    // global.dfail('restrict', m, this)
+                    continue
+                }
+                const str2Regex = str => str.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&')
+                let _prefix = plugin.customPrefix ? plugin.customPrefix : conn.prefix ? conn.prefix : global.prefix
+                let match = (_prefix instanceof RegExp ? // RegExp Mode?
+                    [[_prefix.exec(m.text), _prefix]] :
+                    Array.isArray(_prefix) ? // Array?
+                        _prefix.map(p => {
+                            let re = p instanceof RegExp ? // RegExp in Array?
+                                p :
+                                new RegExp(str2Regex(p))
+                            return [re.exec(m.text), re]
+                        }) :
+                        typeof _prefix === 'string' ? // String?
+                            [[new RegExp(str2Regex(_prefix)).exec(m.text), new RegExp(str2Regex(_prefix))]] :
+                            [[[], new RegExp]]
+                ).find(p => p[1])
+                if (typeof plugin.before === 'function') if (await plugin.before.call(this, m, {
+                    match,
+                    conn: this,
+                    participants,
+                    groupMetadata,
+                    user,
+                    bot,
+                    isROwner,
+                    isOwner,
+                    isAdmin,
+                    isBotAdmin,
+                    isPrems,
+                    chatUpdate,
+                })) continue
+                if (typeof plugin !== 'function') continue
+                if ((usedPrefix = (match[0] || '')[0])) {
+                    let noPrefix = m.text.replace(usedPrefix, '')
+                    let [command, ...args] = noPrefix.trim().split` `.filter(v => v)
+                    args = args || []
+                    let _args = noPrefix.trim().split` `.slice(1)
+                    let text = _args.join` `
+                    command = (command || '').toLowerCase()
+                    let fail = plugin.fail || global.dfail // When failed
+                    let isAccept = plugin.command instanceof RegExp ? // RegExp Mode?
+                        plugin.command.test(command) :
+                        Array.isArray(plugin.command) ? // Array?
+                            plugin.command.some(cmd => cmd instanceof RegExp ? // RegExp in Array?
+                                cmd.test(command) :
+                                cmd === command
+                            ) :
+                            typeof plugin.command === 'string' ? // String?
+                                plugin.command === command :
+                                false
+
+                    if (!isAccept) continue
+                    m.plugin = name
+                    if (m.chat in global.db.data.chats || m.sender in global.db.data.users) {
+                        let chat = global.db.data.chats[m.chat]
+                        let user = global.db.data.users[m.sender]
+                        if (name != 'group-modebot.js' && name != 'owner-unbanchat.js' && name != 'owner-exec.js' && name != 'owner-exec2.js' && name != 'tool-delete.js' && (chat?.isBanned || chat?.mute))
+                        return
+                        if (name != 'unbanchat.js' && chat && chat.isBanned) return // Except this
+                        if (name != 'unbanuser.js' && user && user.banned) return
+                        if (m.isGroup) {
+                            chat.memgc[m.sender].command++
+                            chat.memgc[m.sender].commandTotal++
+                            chat.memgc[m.sender].lastCmd = Date.now()
+                        }
+                        user.command++
+                        user.commandTotal++
+                        user.lastCmd = Date.now()
+                    }
+                    
+                    if (plugin.rowner && plugin.owner && !(isROwner || isOwner)) { // Both Owner
+                        fail('owner', m, this)
+                        continue
+                    }
+                    if (plugin.rowner && !isROwner) { // Real Owner
+                        fail('rowner', m, this)
+                        continue
+                    }
+                    if (plugin.owner && !isOwner) { // Number Owner
+                        fail('owner', m, this)
+                        continue
+                    }
+                    if (plugin.mods && !isMods) { // Moderator
+                        fail('mods', m, this)
+                        continue
+                    }
+                    if (plugin.premium && !isPrems) { // Premium
+                        fail('premium', m, this)
+                        continue
+                    }
+                    if (plugin.group && !m.isGroup) { // Group Only
+                        fail('group', m, this)
+                        continue
+                    } else if (plugin.botAdmin && !isBotAdmin) { // You Admin
+                        fail('botAdmin', m, this)
+                        continue
+                    } else if (plugin.admin && !isAdmin) { // User Admin
+                        fail('admin', m, this)
+                        continue
+                    }
+                    if (plugin.private && m.isGroup) { // Private Chat Only
+                        fail('private', m, this)
+                        continue
+                    }
+                    if (plugin.register == true && _user.registered == false) { // Butuh daftar?
+                        fail('unreg', m, this)
+                        continue
+                    }
+                    if (plugin.rpg && !global.db.data.chats[m.chat].rpg) {
+                        // rpg
+                        fail("rpg", m, this);
+                        continue;
+                    }
+                    if (plugin.nsfw && !global.db.data.chats[m.chat].nsfw) {
+                        // nsfw
+                        fail("nsfw", m, this);
+                        continue;
+                    }
+                    m.isCommand = true
+                    let xp = 'exp' in plugin ? parseInt(plugin.exp) : 17 // XP Earning per command
+                    if (xp > 200) m.reply('Ngecit -_-') // Hehehe
+                    else m.exp += xp
+                    if (!isPrems && plugin.limit && global.db.data.users[m.sender].limit < plugin.limit * 1) {
+                        this.reply(m.chat, `Limit kamu habis, silahkan beli dengan perintah *${usedPrefix}buy <jumlah>*`, m)
+                        continue // Limit habis
+                    }
+                    if (plugin.level > _user.level) {
+                        this.reply(m.chat, `diperlukan level ${plugin.level} untuk menggunakan perintah ini. Level kamu ${_user.level}\n gunakan .levelup untuk menaikan level!`, m)
+                        continue // If the level has not been reached
+                    }
+                    let extra = {
+                        match,
+                        usedPrefix,
+                        noPrefix,
+                        _args,
+                        args,
+                        command,
+                        text,
+                        conn: this,
+                        participants,
+                        groupMetadata,
+                        user,
+                        bot,
+                        isROwner,
+                        isOwner,
+                        isAdmin,
+                        isBotAdmin,
+                        isPrems,
+                        chatUpdate,
+                    }                          
+                    try {
+                        await plugin.call(this, m, extra)
+                        if (!isPrems) m.limit = m.limit || plugin.limit || false
+                    } catch (e) {
+                        // Error occured
+                        m.error = e
+                        console.error(e)
+                        if (e) {
+                            let text = util.format(e)
+                            for (let key of Object.values(APIKeys))
+                                text = text.replace(new RegExp(key, 'g'), '#HIDDEN#')
+                            if (e.name)
+                            for (let jid of owner.map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net').filter(v => v != this.user.jid)) {
+                                let data = (await this.onWhatsApp(jid))[0] || {}
+                                if (data.exists)
+                                    //m.reply(`*Plugin:* ${m.plugin}\n*Sender:* @${m.sender.split`@`[0]}\n*Chat:* ${m.chat}\n*Chat Name:* ${await this.getName(m.chat)}\n*Command:* ${usedPrefix}${command} ${args.join(' ')}\n\n\`\`\`${text}\`\`\``.trim(), data.jid, { mentions: [m.sender] })
+									console.error(`Plugin:${m.plugin} | Sender:@${m.sender.split('@')[0]} | Chat:${m.chat} | ChatName:${await this.getName(m.chat)} | Command:${usedPrefix}${command} ${args.join(' ')} | Error:${text}`)
+                            }
+                            m.reply(text)
+                        }
+                    } finally {
+                        // m.reply(util.format(_user))
+                        if (typeof plugin.after === 'function') {
+                            try {
+                                await plugin.after.call(this, m, extra)
+                            } catch (e) {
+                                console.error(e)
+                            }
+                        }
+                        if (m.limit) m.reply(+ m.limit + ' Limit terpakai')
+                   }
+                    break
+                }
+            }
+        } catch (e) {
+            console.error(e)
+        } finally {
+             //conn.sendPresenceUpdate('composing', m.chat) // kalo pengen auto vn hapus // di baris dekat conn
+            //console.log(global.db.data.users[m.sender])
+            let user, stats = global.db.data.stats
+            if (m) {
+                if (m.sender && (user = global.db.data.users[m.sender])) {
+                    user.exp += m.exp
+                    user.limit -= m.limit * 1
+                }
+
+                let stat
+                if (m.plugin) {
+                    let now = + new Date
+                    if (m.plugin in stats) {
+                        stat = stats[m.plugin]
+                        if (!isNumber(stat.total)) stat.total = 1
+                        if (!isNumber(stat.success)) stat.success = m.error != null ? 0 : 1
+                        if (!isNumber(stat.last)) stat.last = now
+                        if (!isNumber(stat.lastSuccess)) stat.lastSuccess = m.error != null ? 0 : now
+                    } else stat = stats[m.plugin] = {
+                        total: 1,
+                        success: m.error != null ? 0 : 1,
+                        last: now,
+                        lastSuccess: m.error != null ? 0 : now
+                    }
+                    stat.total += 1
+                    stat.last = now
+                    if (m.error == null) {
+                        stat.success += 1
+                        stat.lastSuccess = now
+                    }
+                }
+            }
+
+            try {
+                 require('./lib/print')(m, this)
+             } catch (e) {
+                 console.log(m, m.quoted, e)
+             }
+            if (opts['autoread']) await this.readMessages([m.key])
+        }
+    },
+	
+  async participantsUpdate({ id, participants, action }) {
+    if (opts['self']) return
+    if (global.isInit) return
+
+    let chat = db.data.chats[id] || {}
+    let text = ''
+
+    switch (action) {
+        case 'add':
+        case 'remove':
+        case 'leave':
+        case 'invite':
+        case 'invite_v4':
+            if (chat.welcome) {
+                let groupMetadata = await this.groupMetadata(id).catch(() => null)
+                if (!groupMetadata) break
+
+                for (let user of participants) {
+                    let jid = user
+                    if (typeof user === 'object') {
+                        jid = user.phoneNumber || user.id || user.jid || user
+                    }
+                    if (!jid || (!jid.includes('@s.whatsapp.net') && !jid.includes('@lid'))) continue
+
+                    let pp = 'https://craxid.github.io/icons/icon.webp'
+                    try { pp = await this.profilePictureUrl(jid, 'image') } catch {}
+
+                    const isAdd = ['add', 'invite', 'invite_v4'].includes(action)
+
+                    text = (isAdd
+                        ? (chat.sWelcome || this.welcome || conn.welcome || 'Welcome, @user!')
+                        : (chat.sBye || this.bye || conn.bye || 'Bye, @user!'))
+                        .replace('@subject', groupMetadata.subject || 'this group')
+                        .replace('@desc', groupMetadata.desc?.toString() || '')
+                        .replace('@user', '@' + jid.split('@')[0])
+
+                    /*await this.sendMessage(id, {
+                        text,
+                        mentions: [jid]
+                    })*/
+					
+await this.sendMessage(id, {
+text: text,
+mentions: [jid],
+contextInfo: {
+forwardingScore: 9999,
+isForwarded: true,
+}})
+
+}}
+break            
+            /**case 'promote':
+            text = (chat.sPromote || this.spromote || conn.spromote || '@user ```is now Admin```')
+            case 'demote':
+            if (!text) text = (chat.sDemote || this.sdemote || conn.sdemote || '@user ```is no longer Admin```')
+            text = text.replace('@user', '@' + participants[0].split('@')[0])
+            if (chat.detect) this.sendMessage(id, { text }, { mentions: [participants[0]] })
+            break**/
+    }
+},
+    async delete({ remoteJid, fromMe, id, participant }) {
+        if (fromMe) return
+        let chats = Object.entries(conn.chats).find(([user, data]) => data.messages && data.messages[id])
+        if (!chats) return
+        let msg = JSON.parse(chats[1].messages[id])
+        let chat = global.db.data.chats[msg.key.remoteJid] || {}
+        if (chat.delete) return
+        await this.reply(msg.key.remoteJid, `
+Terdeteksi @${participant.split`@`[0]} telah menghapus pesan
+Untuk mematikan fitur ini, ketik
+*.enable delete*
+`.trim(), msg, {
+            mentions: [participant]
+        })
+        this.copyNForward(msg.key.remoteJid, msg).catch(e => console.log(e, msg))
+    }
+}
+
+let musik = `./fek.xml`
+global.dfail = (type, m, conn) => {
+    let msg = {
+        rowner: '👑 Perintah ini hanya untuk *Pemilik bot*',
+        owner: '🔱 Perintah ini hanya untuk *Admin Bot*',
+        mods: '🔰 Perintah ini hanya untuk *moderator Bot*',
+        premium: '💠 Perintah ini hanya untuk *Pengguna Premium*\n\nPesan *Premium* ke *Owner*',
+        group: '⚙️ Fitur ini hanya bisa digunakan di grup!\n\nSilahkan order premium atau kamu bisa gabung di grup bot untuk menggunakan perintah ini\n\nketik .gcbot untuk gabung ke grup bot',
+        private: '📮 Fitur ini hanya bisa digunakan di *Chat Pribadi*',
+        admin: '🛡️ Perintah ini Hanya untuk *Admin* grup!',
+        botAdmin: '💥 Jadikan bot sebagai *Admin* Grup!',
+        unreg: '📇 Fitur ini untuk pengguna terdaftar\n\n Ketik: *.register nama.umur*\n\n📌 Contoh : *.reg namamu.16*',
+        restrict: '🔐 Fitur ini *dinonaktifkan*'
+    }[type]
+    if (msg) return conn.sendMessage(m.chat, {
+document: { url: musik },
+caption: msg, 
+fileName: 'CraXID Bot',
+fileLength: 1024000000000000,
+mimetype: 'application/vnd.ms-powerpoint',
+contextInfo: {
+forwardingScore: 9999,
+isForwarded: true,
+}}, {quoted: m})
+}
+
+let fs = require('fs')
+let chalk = require('chalk')
+let file = require.resolve(__filename)
+fs.watchFile(file, () => {
+    fs.unwatchFile(file)
+    console.log(chalk.redBright("Update 'handler.js'"))
+    delete require.cache[file]
+    if (global.reloadHandler) console.log(global.reloadHandler())
+})

@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Session & auth (jangan pernah commit!)
+sessions/
+sesi/
+*.session
+
+# Database lokal
+database.json
+database.json.bak*
+*.bak-*
+
+# Kredensial
+cookies.txt
+service-account.json
+.env
+*.pem
+*.key
+
+# Log
+logs/
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary
+tmp/
+
+# Data karakter user
+karakter/
