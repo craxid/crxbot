@@ -1,4 +1,4 @@
-const { Spotify: SoundloadersScraper } = require('../lib/resapi')
+const SoundloadersScraper = require('../lib/spotify.js') // Sesuaikan path jika posisinya berbeda
 
 let handler = async (m, { conn, text, usedPrefix, command }) => {
   // 1. Validasi Input Kosong

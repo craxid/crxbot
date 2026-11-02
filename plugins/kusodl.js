@@ -1,6 +1,6 @@
 const axios = require('axios');
 const cheerio = require('cheerio'); // Kita tambahkan cheerio di sini
-const { searchAnime, scrapePostDetails } = require('../lib/kuso.js');
+const { search, detail } = require('../lib/kuso.js');
 
 const handler = async (m, { conn, text, usedPrefix, command }) => {
   if (!text) {
@@ -17,24 +17,24 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
       // ==========================================
       //        MODE 1: DOWNLOAD / DETAIL
       // ==========================================
-      const detail = await scrapePostDetails(text);
+      const post = await detail(text);
       
-      if (!detail) {
+      if (!post) {
           return m.reply("❌ Gagal mengambil data. Pastikan link yang dikirim valid atau web Kusonime sedang tidak down.");
       }
 
       // Rapikan Info Anime
       let infoText = '';
-      if (detail.info && Object.keys(detail.info).length > 0) {
-          for (const [key, value] of Object.entries(detail.info)) {
+      if (post.info && Object.keys(post.info).length > 0) {
+          for (const [key, value] of Object.entries(post.info)) {
               infoText += `*${key}:* ${value}\n`;
           }
       }
 
       // Rapikan Link Download
       let downloadLinks = '';
-      if (detail.downloads && detail.downloads.length > 0) {
-          detail.downloads.forEach(dl => {
+      if (post.downloads && post.downloads.length > 0) {
+          post.downloads.forEach(dl => {
               downloadLinks += `\n*${dl.quality}*\n`;
               for (const [host, url] of Object.entries(dl.links)) {
                   downloadLinks += `*~> ${host}:* ${url}\n`;
@@ -69,9 +69,9 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
       }
 
       // Susun caption
-      let caption = `*🎥 ${detail.title}*\n\n`;
+      let caption = `*🎥 ${post.title}*\n\n`;
       if (infoText) caption += `*📑 Info Anime:*\n${infoText}\n`;
-      caption += `*📝 Sinopsis:*\n${detail.synopsis}\n\n`;
+      caption += `*📝 Sinopsis:*\n${post.synopsis}\n\n`;
       caption += `*📥 Link Download:*${downloadLinks}`;
       
       return await safeSendMedia(m, conn, img, caption);
@@ -80,7 +80,7 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
       // ==========================================
       //          MODE 2: SEARCH ENGINE
       // ==========================================
-      const results = await searchAnime(text);
+      const results = await search(text);
 
       if (!results || results.length === 0) return m.reply(`❌ Tidak ditemukan hasil untuk kata kunci: *${text}*`);
 

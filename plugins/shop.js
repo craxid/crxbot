@@ -14,9 +14,9 @@ let handler = async (m, { conn, command, args }) => {
     conn.reply(m.chat, `
 ┌─「 *🛒 PEMBELIAN BERHASIL* 」
 ‣ Jumlah: *${count} Limit*
-‣ Harga: *Rp${uangkelimit * count}*
+‣ Harga: *Rp${(uangkelimit * count).toLocaleString('id-ID')}*
 └──────────────`, m)
-  } else conn.reply(m.chat, `❎ Maaf, Kamu tidak memiliki *Uang* untuk membeli *${count}* Limit\n\nKamu bisa mendapatkan *Uang* dari game yang ada di bot.\n\nHarga 1 Limit adalah Rp1000,-`, m)
+  } else conn.reply(m.chat, `❎ Maaf, Kamu tidak memiliki *Uang* untuk membeli *${count}* Limit\n\nKamu bisa mendapatkan *Uang* dari game yang ada di bot.\n\nHarga 1 Limit adalah Rp1.000,-`, m)
 }
 handler.help = ['buy', 'buyall']
 handler.tags = ['main']

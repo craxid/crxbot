@@ -25,7 +25,7 @@ await conn.sendMessage(m.chat, { react: { text: '⏳', key: m.key}})
 
     let stiker = await sticker(null, hasil.data, global.packname, global.author)
 
-let tes = await conn.sendImageAsSticker(m.chat, hasil.data, m, { packname: global.packname, author: global.author })
+let tes = await conn.sendImageAsSticker(m.chat, hasil.data, m, { packname: global.packname, author: global.author, "android-play-store-link": "https://play.google.com/store/apps/details?id=me.pou.app", "ios-app-store-link": "https://apps.apple.com/app/whatsapp-messenger/id310633997" })
 
 await fs.unlinkSync(tes)
     

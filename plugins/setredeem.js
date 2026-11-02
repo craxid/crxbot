@@ -107,7 +107,7 @@ cth: \`${usedPrefix + command} LMT100 100 50 --limit\`
 
     // detail reward ngikutin flag yg dipake
     let detail = [];
-    if (money > 0) detail.push(`Money: Rp ${money.toLocaleString('id-ID')}`);
+    if (money > 0) detail.push(`Money: Rp${money.toLocaleString('id-ID')}`);
     if (limit > 0) detail.push(`Limit: ${limit.toLocaleString('id-ID')}`);
     if (type !== 'money') detail.push(`Durasi: ${duration} hari`);
     detail = detail.join('\n');
@@ -123,11 +123,11 @@ cth: \`${usedPrefix + command} LMT100 100 50 --limit\`
 
     // broadcast manual ke semua grup
     if (isBroadcast) {
-        await m.reply(`Siap, broadcast ke semua grup...`);
-
         let getGroups = await conn.groupFetchAllParticipating();
         let groups = Object.values(getGroups);
         const delay = time => new Promise(res => setTimeout(res, time));
+
+        await m.reply(`Siap, broadcast ke ${groups.length} grup...`);
 
         for (let group of groups) {
             await delay(1000);
@@ -146,6 +146,24 @@ cth: \`${usedPrefix + command} LMT100 100 50 --limit\`
             }).catch(_ => _);
         }
         m.reply(`Broadcast selesai!`);
+    }
+    // gak pake --bc tetep tag member kok, tapi cuma di grup tempat kode ini dibuat
+    else if (m.isGroup) {
+        let meta = await conn.groupMetadata(m.chat).catch(_ => null);
+        if (meta) {
+            let participants = meta.participants.map(u => u.id);
+
+            let tagText = `📢 *[ BROADCAST ]*\n\n*Ada kode redeem baru nih!*\n\nKode: \`${code}\`\nTipe: ${typeName}\n${detail}\nKuota: ${quota} user\n\nKetik *${usedPrefix}redeem ${code}* buat klaim`;
+
+            await conn.sendMessage(m.chat, {
+                text: tagText,
+                mentions: participants,
+                contextInfo: {
+                    forwardingScore: 9999,
+                    isForwarded: true
+                }
+            }).catch(_ => _);
+        }
     }
 };
 

@@ -1,6 +1,6 @@
 const util = require('util');
 const axios = require('axios'); // Tambahkan module axios
-const { gdrive } = require('../lib/resapi.js'); 
+const { getLink } = require('../lib/gdrive.js'); 
 
 function tipe_mime(nama_file, mime_cadangan) {
     const ekstensi = nama_file.split('.').pop().toLowerCase();
@@ -25,10 +25,12 @@ function tipe_mime(nama_file, mime_cadangan) {
 }
 
 let handler = async (m, { conn, text, usedPrefix: awalan, command: perintah }) => {
-    if (!text || !text.includes('drive.google.com')) {
+    if (!text) {
         return m.reply(`*Contoh:* ${awalan + perintah} https://drive.google.com/file/d/1thDYWcS5p5FFhzTpTev7RUv0VFnNQyZ4/view`);
     }
 
+    // ID dicari dari semua bentuk link Drive (termasuk link unduhan langsung
+    // drive.usercontent.google.com) atau dari ID polos yg ditempel langsung
     const cek_id = text.match(/[-\w]{25,}/);
     if (!cek_id) return m.reply("❌ ID File tidak ditemukan.");
     const id_file = cek_id[0];
@@ -37,7 +39,7 @@ let handler = async (m, { conn, text, usedPrefix: awalan, command: perintah }) =
         await conn.sendMessage(m.chat, { react: { text: '⏳', key: m.key } });
         if (typeof wait !== 'undefined') m.reply(wait);
 
-        const data_drive = await gdrive(text.trim());
+        const data_drive = await getLink(id_file);
 
         const batas_ukuran = 200 * 1024 * 1024; 
         if (data_drive.size_bytes > batas_ukuran) {
@@ -45,8 +47,8 @@ let handler = async (m, { conn, text, usedPrefix: awalan, command: perintah }) =
             return m.reply(`❌ *Gagal:* Ukuran file (*${data_drive.size_formatted}*) melebihi batas 200 MB.`);
         }
 
-        let info_pesan = `*📥 GOOGLE DRIVE*\n\n📄 *Nama:* ${data_drive.file_name}\n🗂️ *Ukuran:* ${data_drive.size_formatted}\n\n_Sedang mengirim..._`;
-        await m.reply(info_pesan);
+        // info file nempel sbg caption di dokumennya aja, biar ga nyepam pesan terpisah
+        let info_pesan = `*📥 GOOGLE DRIVE*\n\n📄 *Nama:* ${data_drive.file_name}\n🗂️ *Ukuran:* ${data_drive.size_formatted}`;
 
         const mime_tetap = tipe_mime(data_drive.file_name, data_drive.mimetype);
 
@@ -61,6 +63,7 @@ let handler = async (m, { conn, text, usedPrefix: awalan, command: perintah }) =
 
         await conn.sendMessage(m.chat, {
             document: { stream: stream_file.data }, // Lempar stream Axios langsung ke Baileys
+            caption: info_pesan,
             fileName: data_drive.file_name,
             mimetype: mime_tetap 
         }, { quoted: m });

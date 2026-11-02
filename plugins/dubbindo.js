@@ -1,4 +1,4 @@
-const { scrapeSearch, scrapeVideo, daftarLinkDownload, adaKredensial } = require('../lib/dubbindo.js');
+const { search, detail, links, adaLogin } = require('../lib/dubbindo.js');
 
 // plugin dubbindo (dubbing indonesia), port dari provider CloudStream
 // DubbindoProvider. modelnya DOWNLOADER mode link kayak plugin
@@ -27,7 +27,7 @@ function pasangTimeout(kunci, m, opsi = {}) {
 async function tampilkanLink(m, conn, pilihan, efem) {
   await m.reply(`⏳ Mengambil link download *${pilihan.title}*...`, null, efem);
 
-  const data = await scrapeVideo(pilihan.link);
+  const data = await detail(pilihan.link);
   if (!data) return m.reply('❌ Gagal mengambil data video.', null, efem);
 
   if (data.inQueue) {
@@ -47,7 +47,7 @@ async function tampilkanLink(m, conn, pilihan, efem) {
     let teks = `❌ *${data.title}*\n\nLink download tidak ditemukan di halaman ini.`;
     if (data.kenaWall) {
       teks += `\n\nKemungkinan video ini kena *subscribe wall*:`;
-      teks += adaKredensial()
+      teks += adaLogin()
         ? `\nlogin sudah dicoba tapi playernya tetap belum kebuka (channel belum ke-subscribe / sesi ditolak situsnya).`
         : `\nplugin belum punya akun untuk login. Isi *global.dubbindoUser* dan *global.dubbindoPass* di config.js biar wall-nya bisa dibuka otomatis.`;
     }
@@ -55,7 +55,7 @@ async function tampilkanLink(m, conn, pilihan, efem) {
     return m.reply(teks, null, efem);
   }
 
-  const links = await daftarLinkDownload(data);
+  const daftar = await links(data);
 
   let teks = `*🎥 ${data.title}*\n`;
   const info = [];
@@ -73,7 +73,7 @@ async function tampilkanLink(m, conn, pilihan, efem) {
 
   // semua link download ditampilkan, jangan dipotong (aturan user)
   teks += `\n*📥 Link Download:*\n`;
-  links.forEach(l => {
+  daftar.forEach(l => {
     teks += `~> ${l.res ? l.res + 'p: ' : ''}${l.url}\n`;
   });
   teks += `\n🔗 Halaman: ${data.url}`;
@@ -89,7 +89,7 @@ const handler = async (m, { conn, text, usedPrefix, command, groupMetadata }) =>
   if (menunggu[kunci]) return m.reply('Masih ada pilihan yang menunggu. Balas *nomornya* untuk memilih, atau ketik *batal*.', null, efem);
 
   try {
-    const results = await scrapeSearch(text);
+    const results = await search(text);
     if (!results.length) return m.reply(`❌ Video "${text}" tidak ditemukan.`, null, efem);
 
     if (results.length === 1) return await tampilkanLink(m, conn, results[0], efem);

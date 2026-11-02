@@ -15,7 +15,7 @@ handler.before = async function (m) {
             clearTimeout(this.math[id][3])
             await this.sendPresenceUpdate('composing', m.chat) // dulu conn, jelas error
             delete this.math[id]
-            m.reply(`✅ *Jawaban benar 🎉*\n\n‣ Kamu mendapatkan : *Rp ${math.bonus}*`)
+            m.reply(`✅ *Jawaban benar 🎉*\n\n‣ Kamu mendapatkan : *Rp${math.bonus.toLocaleString('id-ID')}*`)
         } else {
             if (--this.math[id][2] == 0) {
                 clearTimeout(this.math[id][3])

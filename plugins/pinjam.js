@@ -19,17 +19,17 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     let count = args[0]
 
     // Jika limit sudah habis / hutang menumpuk
-    if (sisaLimit <= 0) return m.reply(`⛔ *LIMIT HABIS!*\n\nKamu sudah mencapai batas maksimal pinjaman.\nSilakan lunasi hutangmu sebesar *Rp. ${user.pinjaman.toLocaleString('id-ID')}* terlebih dahulu dengan mengetik *${usedPrefix}bayar* agar limit kembali tersedia.`)
+    if (sisaLimit <= 0) return m.reply(`⛔ *LIMIT HABIS!*\n\nKamu sudah mencapai batas maksimal pinjaman.\nSilakan lunasi hutangmu sebesar *Rp${user.pinjaman.toLocaleString('id-ID')}* terlebih dahulu dengan mengetik *${usedPrefix}bayar* agar limit kembali tersedia.`)
 
     // Validasi input awal (menampilkan sisa limit)
-    if (!count) return m.reply(`Masukkan nominal uang yang ingin dipinjam!\n\n💳 *Limitmu (Level ${user.level}):* Rp. ${limit.toLocaleString('id-ID')}\n📉 *Sisa Limitmu Saat Ini:* Rp. ${sisaLimit.toLocaleString('id-ID')}\n📊 *Bunga Pinjaman:* ${persenBunga}%\n\n*Contoh penggunaan:*\n${usedPrefix + command} 10000`)
+    if (!count) return m.reply(`Masukkan nominal uang yang ingin dipinjam!\n\n💳 *Limitmu (Level ${user.level}):* Rp${limit.toLocaleString('id-ID')}\n📉 *Sisa Limitmu Saat Ini:* Rp${sisaLimit.toLocaleString('id-ID')}\n📊 *Bunga Pinjaman:* ${persenBunga}%\n\n*Contoh penggunaan:*\n${usedPrefix + command} 10000`)
     if (isNaN(count)) return m.reply('Nominal pinjaman harus berupa angka!')
     
     let nominal = parseInt(count)
 
     // Validasi nominal pinjaman terhadap sisa limit
     if (nominal < 1000) return m.reply('Minimal meminjam uang adalah *1.000*!')
-    if (nominal > sisaLimit) return m.reply(`Nominal terlalu besar! Sisa limit yang bisa kamu pinjam saat ini hanya *Rp. ${sisaLimit.toLocaleString('id-ID')}*.\n\n_Tingkatkan levelmu atau lunasi hutang sebelumnya untuk menambah limit!_`)
+    if (nominal > sisaLimit) return m.reply(`Nominal terlalu besar! Sisa limit yang bisa kamu pinjam saat ini hanya *Rp${sisaLimit.toLocaleString('id-ID')}*.\n\n_Tingkatkan levelmu atau lunasi hutang sebelumnya untuk menambah limit!_`)
     
     // Cek cooldown (Cooldown saya set 5 Menit = 300000 ms agar bisa minjam berkali-kali asal limit ada)
     let __timers = (new Date - user.lastpinjam)
@@ -53,11 +53,11 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
 
       let caption = `🎉 *PINJAMAN KAMU BERHASIL* 🎉\n\n`
       caption += `Berhasil meminjam uang dari Bank\n\n`
-      caption += `💵 *Nominal Pinjaman:* Rp. ${nominal.toLocaleString('id-ID')}\n`
-      caption += `📈 *Bunga (${persenBunga}%):* Rp. ${biayaBunga.toLocaleString('id-ID')}\n`
-      caption += `💳 *Total Hutang Baru:* Rp. ${user.pinjaman.toLocaleString('id-ID')}\n`
-      caption += `💰 *Uang Kamu Sekarang:* Rp. ${user.money.toLocaleString('id-ID')}\n\n`
-      caption += `📉 *SISA LIMIT:* Rp. ${sisaLimitBaru.toLocaleString('id-ID')}\n\n`
+      caption += `💵 *Nominal Pinjaman:* Rp${nominal.toLocaleString('id-ID')}\n`
+      caption += `📈 *Bunga (${persenBunga}%):* Rp${biayaBunga.toLocaleString('id-ID')}\n`
+      caption += `💳 *Total Hutang Baru:* Rp${user.pinjaman.toLocaleString('id-ID')}\n`
+      caption += `💰 *Uang Kamu Sekarang:* Rp${user.money.toLocaleString('id-ID')}\n\n`
+      caption += `📉 *SISA LIMIT:* Rp${sisaLimitBaru.toLocaleString('id-ID')}\n\n`
       caption += `_Catatan: Segera lunasi hutangmu dengan mengetik *${usedPrefix}bayar*_`
       
       m.reply(caption)

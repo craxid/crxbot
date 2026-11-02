@@ -33,7 +33,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
         let isMoney = data.type === 'money'
         let rewardParts = []
         if (isMoney) {
-            if ((data.money || 0) > 0) rewardParts.push(`Money: Rp ${data.money.toLocaleString('id-ID')}`)
+            if ((data.money || 0) > 0) rewardParts.push(`Money: Rp${data.money.toLocaleString('id-ID')}`)
             if ((data.limit || 0) > 0) rewardParts.push(`Limit: ${data.limit.toLocaleString('id-ID')}`)
         }
         let reward = isMoney ? rewardParts.join('\n') : `Durasi: ${data.duration} hari`

@@ -13,7 +13,10 @@ var handler = async (m, { conn, usedPrefix, command, text }) => {
     if (Array.isArray(data)) {
       data = data[0]; // Mengambil data pertama dari array
     }
-    let datetime = new Date(parseInt(data.datetime));
+    let ts = parseInt(data.datetime)
+    // api kadang kirim detik (10 digit), kadang milidetik (13 digit)
+    if (String(Math.abs(ts)).length <= 10) ts *= 1000
+    let datetime = new Date(ts);
     let hari = datetime.toLocaleString('id-ID', { weekday: 'long' });
     let tanggal = datetime.getDate();
     let bulan = datetime.toLocaleString('id-ID', { month: 'long' });

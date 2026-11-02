@@ -69,7 +69,7 @@ ${global.gx} *Role:* ${role}
 ${global.gx} *Nomor:* ${PhoneNumber('+' + jidNo).getNumber('international')}
 ${global.gx} *Link:* wa.me/${jidNo}
 ${registered ? global.gx + ' *Umur*: ' + age + ' tahun\n' : ''}${global.gx} *Profesi:* ${kerja}
-${global.gx} *Uang:* Rp. ${money.toLocaleString('id-ID')},-
+${global.gx} *Uang:* Rp${money.toLocaleString('id-ID')},-
 ${global.gx} *Limit:* ${limit.toLocaleString('id-ID')}
 ${global.gx} *Level:* ${level.toLocaleString('id-ID')}
 ${global.gx} *XP:* ${exp.toLocaleString('id-ID')} (${(exp - min).toLocaleString('id-ID')}/${xp.toLocaleString('id-ID')}) [${math <= 0 ? `Siap untuk *${usedPrefix}levelup*` : `${math.toLocaleString('id-ID')} left`}]

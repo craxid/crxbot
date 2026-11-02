@@ -52,7 +52,7 @@ handler.before = async m => {
 
 📦 Detail Transfer: 
 *🧺 Jenis Item:* ${type} 
-*🔢 Jumlah Item:* Rp ${count.toLocaleString('id-ID')}
+*🔢 Jumlah Item:* Rp${count.toLocaleString('id-ID')}
 *👤 Akun Tujuan:* @${(to || '').replace(/@s\.whatsapp\.net/g, '')} 
 
 *💸 Transfer telah diproses dengan sukses!*

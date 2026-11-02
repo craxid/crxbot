@@ -4,9 +4,7 @@ const path = require('path');
 const fetch = require('node-fetch');
 const FormData = require('form-data');
 
-// Telegram credentials
-const TELEGRAM_BOT_TOKEN = 'ISI_TOKEN_DISINI';
-const TELEGRAM_CHAT_ID = '2007138982';
+// token & chat tujuan diambil dari config.js (global.tgscToken & global.tgchat)
 
 let handler = async () => {
   try {
@@ -45,7 +43,18 @@ async function buatArsip() {
         'package-lock.json',
         'tmp/**',
         'sessions/**',
-        '.git/**'
+        '.git/**',
+        // kredensial & data sesi, jangan ikut kebawa di arsip SC
+        'service-account.json',
+        'cookies.txt',
+        'sesi/**',
+        'karakter/**',
+        // sampah runtime & bawaan environment, gede doang isinya
+        'venv/**',
+        'logs/**',
+        '**/*.log',
+        '**/*.bak*',
+        '**/*.back'
       ]
 });
 
@@ -77,13 +86,17 @@ async function kirimArsip() {
 }
 
 async function kirimKeTelegram(filePath, caption = '📤 Arsip otomatis dikirim dari bot') {
+  if (!global.tgscToken || !global.tgchat) {
+    console.error('❌ global.tgscToken / global.tgchat belum diisi di config.js');
+    return;
+}
   const form = new FormData();
-  form.append('chat_id', TELEGRAM_CHAT_ID);
+  form.append('chat_id', global.tgchat);
   form.append('caption', caption);
   form.append('document', fs.createReadStream(filePath));
 
   try {
-    const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument`, {
+    const res = await fetch(`https://api.telegram.org/bot${global.tgscToken}/sendDocument`, {
       method: 'POST',
       body: form
 });

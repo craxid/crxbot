@@ -55,31 +55,31 @@ let handler = async (m, { isPrems, args, conn, text, command, usedPrefix }) => {
         let kerjaan = `乂 *B U R S A - K E R J A*
 
 *Tingkat Pemula*
-• Kurir (Min Lv. 5 | Max Gaji: Rp 3.000)
-• Gojek (Min Lv. 10 | Max Gaji: Rp 4.000)
-• Sopir (Min Lv. 15 | Max Gaji: Rp 5.000)
-• Karyawan Indomaret (Min Lv. 20 | Max Gaji: Rp 6.000)
+• Kurir (Min Lv. 5 | Max Gaji: Rp3.000)
+• Gojek (Min Lv. 10 | Max Gaji: Rp4.000)
+• Sopir (Min Lv. 15 | Max Gaji: Rp5.000)
+• Karyawan Indomaret (Min Lv. 20 | Max Gaji: Rp6.000)
 
 *Tingkat Menengah*
-• Kantoran (Min Lv. 25 | Max Gaji: Rp 10.000)
-• Polisi (Min Lv. 30 | Max Gaji: Rp 12.000)
+• Kantoran (Min Lv. 25 | Max Gaji: Rp10.000)
+• Polisi (Min Lv. 30 | Max Gaji: Rp12.000)
 
 *Spesialis IT*
-• Frontend Developer (Min Lv. 40 | Max Gaji: Rp 15.000)
-• Web Developer (Min Lv. 45 | Max Gaji: Rp 17.000)
-• Backend Developer (Min Lv. 50 | Max Gaji: Rp 20.000)
-• Game Developer (Min Lv. 55 | Max Gaji: Rp 22.000)
-• Fullstack Developer (Min Lv. 60 | Max Gaji: Rp 25.000)
+• Frontend Developer (Min Lv. 40 | Max Gaji: Rp15.000)
+• Web Developer (Min Lv. 45 | Max Gaji: Rp17.000)
+• Backend Developer (Min Lv. 50 | Max Gaji: Rp20.000)
+• Game Developer (Min Lv. 55 | Max Gaji: Rp22.000)
+• Fullstack Developer (Min Lv. 60 | Max Gaji: Rp25.000)
 
 *Profesional Elit*
-• Dokter (Min Lv. 70 | Max Gaji: Rp 30.000)
-• Pemain Sepak Bola (Min Lv. 75 | Max Gaji: Rp 35.000)
-• Trader (Min Lv. 80 | Max Gaji: Rp 40.000)
+• Dokter (Min Lv. 70 | Max Gaji: Rp30.000)
+• Pemain Sepak Bola (Min Lv. 75 | Max Gaji: Rp35.000)
+• Trader (Min Lv. 80 | Max Gaji: Rp40.000)
 
 *Kelas Berbahaya (Underworld)*
-• Pemburu Manusia (Min Lv. 90 | Max Gaji: Rp 45.000)
-• Pembunuh Bayaran (Min Lv. 95 | Max Gaji: Rp 50.000)
-• Hunter (Min Lv. 100 | Max Gaji: Rp 60.000)
+• Pemburu Manusia (Min Lv. 90 | Max Gaji: Rp45.000)
+• Pembunuh Bayaran (Min Lv. 95 | Max Gaji: Rp50.000)
+• Hunter (Min Lv. 100 | Max Gaji: Rp60.000)
 
 💡 _Contoh Penggunaan_ :
 ${usedPrefix}${command} kantoran`.trim();

@@ -88,7 +88,6 @@ module.exports = {
                     if (!isNumber(user.aqua)) user.aqua = 0
                     if (!isNumber(user.diamond)) user.diamond = 0
                     if (!isNumber(user.emerald)) user.emerald = 0
-                    if (!isNumber(user.berlian)) user.berlian = 0
                     if (!isNumber(user.iron)) user.iron = 0
                     if (!isNumber(user.emas)) user.emas = 0
         
@@ -332,7 +331,6 @@ module.exports = {
                       bank: 0,
                       diamond: 0,
                       emerald: 0,
-                      berlian: 0,
                       iron: 0,
                       emas: 0,
                       common: 0,
@@ -630,7 +628,11 @@ module.exports = {
             if (opts['nyimak']) return
             if (!m.fromMe && opts['self']) return
             if (opts['pconly'] && m.chat.endsWith('g.us')) return
-            if (opts['gconly'] && !m.chat.endsWith('g.us')) return
+            if (opts['gconly'] && !m.chat.endsWith('g.us')) {
+                // referal doang yg boleh lewat di chat pribadi, link klaimnya emang ngarah ke chat bot langsung
+                let _perintah = String(m.text || '').trim().replace(/^[^\w\s]+/, '').split(/\s+/)[0].toLowerCase()
+                if (!/@(s\.whatsapp\.net|lid)$/.test(m.chat) || !['ref', 'referal'].includes(_perintah)) return
+            }
             if (opts['swonly'] && m.chat !== 'status@broadcast') return
             if (typeof m.text !== 'string') m.text = ''
             if (opts['queque'] && m.text) {
@@ -749,9 +751,9 @@ module.exports = {
                     if (m.chat in global.db.data.chats || m.sender in global.db.data.users) {
                         let chat = global.db.data.chats[m.chat]
                         let user = global.db.data.users[m.sender]
-                        if (name != 'group-modebot.js' && name != 'owner-unbanchat.js' && name != 'owner-exec.js' && name != 'owner-exec2.js' && name != 'tool-delete.js' && (chat?.isBanned || chat?.mute))
+                        if (name != 'group-modebot.js' && name != 'owner-unbanchat.js' && name != 'owner-exec.js' && name != 'owner-exec2.js' && name != 'tool-delete.js' && name != 'owner-unmute.js' && (chat?.isBanned || chat?.mute))
                         return
-                        if (name != 'unbanchat.js' && chat && chat.isBanned) return // Except this
+                        if (name != 'owner-unbanchat.js' && name != 'owner-unmute.js' && chat && chat.isBanned) return // Except this
                         if (name != 'unbanuser.js' && user && user.banned) return
                         if (m.isGroup) {
                             chat.memgc[m.sender].command++
@@ -812,6 +814,8 @@ module.exports = {
                         continue;
                     }
                     m.isCommand = true
+                    // delay 3 detik tiap perintah dari user, biar bot ga spam balesnya
+                    await delay(3000)
                     let xp = 'exp' in plugin ? parseInt(plugin.exp) : 17 // XP Earning per command
                     if (xp > 200) m.reply('Ngecit -_-') // Hehehe
                     else m.exp += xp
@@ -973,13 +977,27 @@ isForwarded: true,
 
 }}
 break            
-            /**case 'promote':
-            text = (chat.sPromote || this.spromote || conn.spromote || '@user ```is now Admin```')
-            case 'demote':
-            if (!text) text = (chat.sDemote || this.sdemote || conn.sdemote || '@user ```is no longer Admin```')
-            text = text.replace('@user', '@' + participants[0].split('@')[0])
-            if (chat.detect) this.sendMessage(id, { text }, { mentions: [participants[0]] })
-            break**/
+        case 'promote':
+        case 'demote':
+            // kasih tau kalau ada yang naik/turun jadi admin, cuma jalan kalau detect aktif
+            if (chat.detect) {
+                const isPromote = action === 'promote'
+                for (let user of participants) {
+                    let jid = user
+                    if (typeof user === 'object') {
+                        jid = user.phoneNumber || user.id || user.jid || user
+                    }
+                    if (!jid || (!jid.includes('@s.whatsapp.net') && !jid.includes('@lid'))) continue
+
+                    text = (isPromote
+                        ? (chat.sPromote || this.spromote || conn.spromote || '🎉 @user sekarang menjadi *admin* grup!')
+                        : (chat.sDemote || this.sdemote || conn.sdemote || '@user sudah tidak menjadi admin grup.'))
+                        .replace('@user', '@' + jid.split('@')[0])
+
+                    await this.sendMessage(id, { text, mentions: [jid] })
+                }
+            }
+            break
     }
 },
     async delete({ remoteJid, fromMe, id, participant }) {

@@ -1,15 +1,15 @@
 
 // --- KEBUTUHAN & MATERIAL DASAR ---
-const Bcoal = 1500
-const Scoal = 300
-const Bbatu = 1000
-const Sbatu = 200
+const Bcoal = 150
+const Scoal = 30
+const Bbatu = 100
+const Sbatu = 20
 const Bkayu = 1000
 const Skayu = 200
 const Bstring = 5000
 const Sstring = 1000
-const Biron = 20000
-const Siron = 4000
+const Biron = 2000
+const Siron = 400
 
 // --- SAMPAH & DAUR ULANG ---
 const Bsampah = 100
@@ -22,16 +22,14 @@ const Bkardus = 500
 const Skardus = 100
 
 // --- MINERAL & PERMATA ---
-const Bdiamond = 100000
-const Sdiamond = 25000
-const Bemerald = 150000
-const Semerald = 35000
-const Bberlian = 100000
-const Sberlian = 25000
-const Bemasbiasa = 150000
-const Semasbiasa = 30000
-const Bemasbatang = 250000
-const Semasbatang = 50000
+const Bdiamond = 30000
+const Sdiamond = 7500
+const Bemerald = 20000
+const Semerald = 5000
+const Bemasbiasa = 12000
+const Semasbiasa = 3000
+const Bemasbatang = 20000
+const Semasbatang = 5000
 
 // --- CONSUMABLES (POTION, FOOD, DRINK) ---
 const potion = 15000
@@ -157,7 +155,6 @@ let handler  = async (m, { conn, command, args, usedPrefix, owner }) => {
 💎Diamond:     ${Bdiamond}
 ❇️Emerald:     ${Bemerald}
 ⛓️Iron:        ${Biron}
-💎Berlian:     ${Bberlian}
 🪙Emas:        ${Bemasbiasa}
 🪨Coal:        ${Bcoal}
 📨Common:      ${Bcommon}
@@ -214,7 +211,6 @@ let handler  = async (m, { conn, command, args, usedPrefix, owner }) => {
 🥫Kaleng:        ${Bkaleng}
 📦Kardus:        ${Bkardus}
 🪵Kayu:          ${Bkayu}
-💎Berlian:       ${Sberlian}
 🔫Weapon:        ${SWeap}
 
 > Makanan
@@ -424,14 +420,6 @@ Contoh penggunaan: *${usedPrefix}shop buy potion 1*
                                 global.db.data.users[m.sender].money -= Bgardenboxs * count
                                 conn.reply(m.chat, `Berhasil membeli ${count} Gardenboxs dengan harga ${Bgardenboxs * count} money`, m)
                             } else conn.reply(m.chat, `Uang kamu tidak cukup untuk membeli ${count} gardenboxs dengan harga ${Bgardenboxs * count} money`.trim(), m)
-                        
-                        break
-                    case 'berlian':
-                            if (global.db.data.users[m.sender].money >= Bberlian * count) {
-                                global.db.data.users[m.sender].berlian += count * 1
-                                global.db.data.users[m.sender].money -= Bberlian * count
-                                conn.reply(m.chat, `Berhasil membeli ${count} Berlian dengan harga ${Bberlian * count} money`, m)
-                            } else conn.reply(m.chat, `Uang kamu tidak cukup untuk membeli ${count} berlian dengan harga ${Bberlian * count} money`.trim(), m)
                         
                         break
                     case 'bensin':
@@ -746,13 +734,6 @@ Contoh penggunaan: *${usedPrefix}shop buy potion 1*
                             global.db.data.users[m.sender].money += Sapel * count
                             conn.reply(m.chat, `Berhasil menjual ${count} apel, dan kamu mendapatkan ${Sapel * count} money`, m)
                         } else conn.reply(m.chat, `Apel kamu tidak cukup`, m)
-                        break
-                   case 'berlian':
-                        if (global.db.data.users[m.sender].berlian >= count * 1) {
-                            global.db.data.users[m.sender].berlian -= count * 1
-                            global.db.data.users[m.sender].money += Sberlian * count
-                            conn.reply(m.chat, `Berhasil menjual ${count} berlian, dan kamu mendapatkan ${Sberlian * count} money`, m)
-                        } else conn.reply(m.chat, `Berlian kamu tidak cukup`, m)
                         break
                    case 'emas':
                         if (global.db.data.users[m.sender].emas >= count * 1) {
@@ -1089,14 +1070,6 @@ Contoh penggunaan: *${usedPrefix}shop buy potion 1*
                             } else conn.reply(m.chat, `Uang kamu tidak cukup untuk membeli ${count} gardenboxs dengan harga ${Bgardenboxs * count} money`.trim(), m)
                         
                         break
-                    case 'berlian':
-                            if (global.db.data.users[m.sender].money >= Bberlian * count) {
-                                global.db.data.users[m.sender].berlian += count * 1
-                                global.db.data.users[m.sender].money -= Bberlian * count
-                                conn.reply(m.chat, `Berhasil membeli ${count} Apel dengan harga ${Bberlian * count} money`, m)
-                            } else conn.reply(m.chat, `Uang kamu tidak cukup untuk membeli ${count} berlian dengan harga ${Bberlian * count} money`.trim(), m)
-                        
-                        break
                     case 'emas':
                             if (global.db.data.users[m.sender].money >= Bemasbiasa * count) {
                                 global.db.data.users[m.sender].emas += count * 1
@@ -1385,13 +1358,6 @@ Contoh penggunaan: *${usedPrefix}shop buy potion 1*
                             global.db.data.users[m.sender].money += Sapel * count
                             conn.reply(m.chat, `Berhasil menjual ${count} apel, dan kamu mendapatkan ${Sapel * count} money`, m)
                         } else conn.reply(m.chat, `Apel kamu tidak cukup`, m)
-                        break
-                    case 'berlian':
-                        if (global.db.data.users[m.sender].berlian >= count * 1) {
-                            global.db.data.users[m.sender].berlian -= count * 1
-                            global.db.data.users[m.sender].money += Sberlian * count
-                            conn.reply(m.chat, `Berhasil menjual ${count} berlian, dan kamu mendapatkan ${Sberlian * count} money`, m)
-                        } else conn.reply(m.chat, `Berlian kamu tidak cukup`, m)
                         break
                    case 'emas':
                         if (global.db.data.users[m.sender].emas >= count * 1) {

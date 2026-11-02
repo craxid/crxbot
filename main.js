@@ -187,8 +187,7 @@ require('./config')
     phone = phone.replace(/\D/g, '')
     console.log(chalk.bgWhite(chalk.blue('-- Please wait, generating code... --')))
     setTimeout(async () => {
-      const acakKode = () => Array.from({length: 8}, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('')
-      const code = await conn.requestPairingCode(phone, acakKode())
+      const code = await conn.requestPairingCode(phone, 'RTXZYBOT')
       const pretty = code?.match(/.{1,4}/g)?.join('-') || code
       console.log(chalk.black(chalk.bgGreen('Your Pairing Code : ')), chalk.black(chalk.white(pretty)))
     }, 3000)

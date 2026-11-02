@@ -13,7 +13,7 @@ module.exports = {
                 `⏰ *Masa sewa bot telah berakhir!*\n\n` +
                 `Bot *${this.user.name}* akan keluar dari grup ini.\n` +
                 `Untuk perpanjangan sewa, silakan hubungi owner:\n` +
-                `📞 wa.me/6281234567890 (@6281234567890)\n\n` +
+                `📞 wa.me/6285892734104 (@6285892734104)\n\n` +
                 `Terima kasih telah menggunakan layanan kami.`
             )
 

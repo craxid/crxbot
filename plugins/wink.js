@@ -181,4 +181,39 @@ async function upscale(IMAGE_PATH) {
   throw new Error(`Timeout saat memproses gambar.`);
 }
 
-module.exports = { upscale };
+// --- handler plugin ---
+// upscale() di atas butuh path file, jadi gambar yg diunduh disimpan
+// dulu ke tmp, diproses, terus file sementaranya dibuang lagi
+let handler = async (m, { conn, usedPrefix, command }) => {
+  let q = m.quoted ? m.quoted : m;
+  let mime = (q.msg || q).mimetype || q.mediaType || "";
+  if (!/image\/(jpe?g|png|webp)/.test(mime)) {
+    return m.reply(`Kirim gambar dengan caption *${usedPrefix + command}* atau reply gambar yang sudah dikirim`);
+  }
+
+  let tmpFile;
+  try {
+    m.reply(global.wait);
+    let img = await q.download?.();
+    if (!img) throw new Error("Gagal mengunduh gambarnya");
+    let ext = mime.split("/")[1].replace("jpeg", "jpg");
+    tmpFile = path.join(__dirname, "../tmp", `wink-${Date.now()}.${ext}`);
+    await fsp.writeFile(tmpFile, img);
+
+    let hasilUrl = await upscale(tmpFile);
+    await conn.sendFile(m.chat, hasilUrl, "wink-hd.jpg", "*Wink Ultra HD*\n\n© CraXID Bot", m);
+  } catch (e) {
+    console.log(e);
+    m.reply(`Proses gagal :(\n\n${e.message}`);
+  } finally {
+    if (tmpFile) await fsp.unlink(tmpFile).catch(() => {});
+  }
+};
+
+handler.help = ["wink"];
+handler.tags = ["tools"];
+handler.command = ["wink"];
+handler.limit = 5;
+handler.register = true;
+
+module.exports = handler;

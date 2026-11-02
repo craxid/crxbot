@@ -1,4 +1,4 @@
-const { douyin } = require('../lib/resapi'); 
+const { douyin } = require('../lib/douyin'); 
 const axios = require('axios');
 const JSZip = require('jszip');
 

@@ -1,4 +1,4 @@
-const { cekJNT } = require('../lib/resapi.js');
+const { cek } = require('../lib/jnt.js');
 
 // Fungsi helper untuk jeda (delay)
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -19,7 +19,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     await sleep(5000);
 
     // Panggil scraper
-    let res = await cekJNT(resi, phone4);
+    let res = await cek(resi, phone4);
 
     if (!res.status) {
         // Jika gagal, edit pesan awal menjadi pesan error

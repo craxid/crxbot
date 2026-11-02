@@ -9,7 +9,8 @@ handler.before = async function (m, { conn, isAdmin, isBotAdmin }) {
   if (!chat.antiTagStatus) return true // <-- Fitur enable/disable ada di sini
 
   // 3. Cek apakah tipe pesan adalah tag status ke grup
-  if (m.mtype === 'groupStatusMentionMessage') {
+  // cek properti langsung juga, jaga-jaga kalau key-nya bukan yang pertama di m.message
+  if (m.mtype === 'groupStatusMentionMessage' || m.message?.groupStatusMentionMessage) {
     
     // Inisialisasi database user untuk hitungan peringatan
     let user = global.db.data.users[m.sender]
@@ -34,7 +35,7 @@ handler.before = async function (m, { conn, isAdmin, isBotAdmin }) {
       warnMsg += `Halo ${nama}, kamu terdeteksi membagikan *Status WhatsApp* yang men-tag grup ini.\n\n`
       warnMsg += `Tindakan ini dilarang untuk menjaga privasi grup. Ini adalah peringatan ke *${user.warnTagStatus}*.\n\n`
       warnMsg += `❗️ *Sisa kesempatanmu: ${sisa} kali.*\nJika mencapai peringatan ke-3, kamu akan otomatis dikeluarkan dari grup.\n\n`
-      warnMsg += `_Untuk mematikan fitur ini, ketik *!disable antitaggc*_`
+      warnMsg += `_Untuk mematikan fitur ini, ketik *.disable antitaggc*_`
 
       await conn.reply(m.chat, warnMsg, m, { mentions: [m.sender] })
 

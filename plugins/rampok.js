@@ -20,16 +20,16 @@ let handler = async (m, { conn, usedPrefix, command }) => {
     let penalti = Math.floor(rob * 0.5); // Penalti 50% dari jumlah yang ingin dirampok
     global.db.data.users[m.sender].money -= penalti;
     global.db.data.users[who].money += penalti; // Penalti diberikan ke target
-    return m.reply(`Si @${who.split`@`[0]} hanya punya Rp ${users.money.toLocaleString('id-ID')}, tidak cukup untuk dirampok (Rp ${rob.toLocaleString('id-ID')}) 
+    return m.reply(`Si @${who.split`@`[0]} hanya punya Rp${users.money.toLocaleString('id-ID')}, tidak cukup untuk dirampok (Rp${rob.toLocaleString('id-ID')}) 
 
-Kamu kena penalti Rp ${penalti.toLocaleString('id-ID')} 
+Kamu kena penalti Rp${penalti.toLocaleString('id-ID')} 
 Uang akan diberikan ke @${who.split`@`[0]}`, null, { mentions: [who, m.sender] });
   }
   global.db.data.users[m.sender].money += rob;
   global.db.data.users[who].money -= rob;
   await conn.sendPresenceUpdate('recording', m.chat);
   // pakai @nomor biar ke-tag beneran (mentions saja tanpa @ di teks gak jadi tag)
-  let tegs = `@${m.sender.split('@')[0]} berhasil merampok uang sebesar *Rp ${rob.toLocaleString('id-ID')}* dari @${who.split('@')[0]}`;
+  let tegs = `@${m.sender.split('@')[0]} berhasil merampok uang sebesar *Rp${rob.toLocaleString('id-ID')}* dari @${who.split('@')[0]}`;
   conn.sendMessage(m.chat, { 
     text: tegs, 
     mentions: [m.sender, who], 

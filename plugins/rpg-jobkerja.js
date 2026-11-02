@@ -88,7 +88,7 @@ let handler = async (m, { isPrems, conn, text, usedPrefix, command }) => {
         let deskripsiKerja = jobText[user.job] || 'Kamu telah bekerja keras hari ini menyelesaian tugasmu.';
 
         // Pesan akhir yang dikirimkan ke pemain
-        let message = `*💼 Laporan Pekerjaan: ${user.job.toUpperCase()}*\n\n_"${deskripsiKerja}"_\n\n*💰 Gajimu Hari Ini:*\n💵 *Money* : Rp. ${money.toLocaleString('id-ID')}\n✨ *Exp* : ${exp.toLocaleString('id-ID')}\n📈 *Tingkat Kerja Keras* : +1 🧟‍♂️`;
+        let message = `*💼 Laporan Pekerjaan: ${user.job.toUpperCase()}*\n\n_"${deskripsiKerja}"_\n\n*💰 Gajimu Hari Ini:*\n💵 *Money* : Rp${money.toLocaleString('id-ID')}\n✨ *Exp* : ${exp.toLocaleString('id-ID')}\n📈 *Tingkat Kerja Keras* : +1 🧟‍♂️`;
 
         conn.reply(m.chat, message, m);
     }

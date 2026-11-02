@@ -1,4 +1,4 @@
-const { scrapePixeldrain } = require('../lib/pixeldrain');
+const { info } = require('../lib/pixeldrain');
 
 let handler = async (m, { conn, args, usedPrefix, command }) => {
   if (!args[0]) throw `✳️ Contoh:\n*${usedPrefix + command}* https://pixeldrain.com/u/aycSARAA`;
@@ -22,7 +22,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
   m.reply(global.wait || '⏳ Sedang mengambil data...');
 
   try {
-    const { fileId, fileName, mimeType, directLink } = await scrapePixeldrain(args[0]);
+    const { fileId, fileName, mimeType, directLink } = await info(args[0]);
 
     if (mimeType && mimeType.startsWith("video/")) {
       await conn.sendMessage(m.chat, {

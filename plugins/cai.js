@@ -1,11 +1,11 @@
-const https = require('https');
+const http = require('http');
 const fs = require('fs');
 
 // ================= KONFIGURASI API =================
-const API_URL = 'openrouter.ai';
-// Pastikan variabel global API Anda sudah benar, menggunakan goapi atau ninrut
-const API_KEY = 'ISI_API_KEY_DISINI'
-const MODEL_ID = 'auto'; // Silakan ganti model sesuai keinginan
+// Sekarang lewat 9Router lokal di VPS ini, key ambil dari config (global.ninrut)
+const ROUTER_HOST = '127.0.0.1';
+const ROUTER_PORT = 20128;
+const MODEL_ID = 'oc/big-pickle'; // Silakan ganti model sesuai keinginan
 
 const sesiFolder = 'sesi';
 const karakterFolder = 'karakter';
@@ -15,7 +15,7 @@ if (!fs.existsSync(karakterFolder)) fs.mkdirSync(karakterFolder);
 
 const MAX_HISTORY_LENGTH = 10; // Batas riwayat agar tidak boros limit token
 
-// ================= FUNGSI FETCH OPENROUTER =================
+// ================= FUNGSI FETCH 9ROUTER =================
 function fetchAIResponse(messages) {
     return new Promise((resolve, reject) => {
         const payload = JSON.stringify({
@@ -25,20 +25,19 @@ function fetchAIResponse(messages) {
         });
 
         const options = {
-            hostname: API_URL,
-            port: 443,
-            path: '/api/v1/chat/completions',
+            hostname: ROUTER_HOST,
+            port: ROUTER_PORT,
+            path: '/v1/chat/completions',
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${API_KEY}`,
-                'HTTP-Referer': 'https://github.com/craxid',
-                'X-OpenRouter-Title': 'CraXID Project',
+                'Authorization': `Bearer ${global.ninrut}`,
                 'Content-Length': Buffer.byteLength(payload)
-            }
+            },
+            timeout: 120000
         };
 
-        const req = https.request(options, (res) => {
+        const req = http.request(options, (res) => {
             let data = '';
             res.on('data', (chunk) => data += chunk);
             res.on('end', () => {
@@ -50,11 +49,12 @@ function fetchAIResponse(messages) {
                         resolve(parsed.choices[0].message.content);
                     }
                 } catch (e) {
-                    reject(new Error("Gagal membaca respons dari OpenRouter."));
+                    reject(new Error("Gagal membaca respons dari 9Router."));
                 }
             });
         });
 
+        req.on('timeout', () => req.destroy(new Error('9Router tidak merespons (timeout).')));
         req.on('error', (e) => reject(e));
         req.write(payload);
         req.end();
@@ -63,7 +63,7 @@ function fetchAIResponse(messages) {
 
 // ================= HANDLER BOT =================
 const handler = async (m, { text, usedPrefix, command, conn }) => {
-    
+
   // Fitur lihat karakter
   if (text?.toLowerCase().trim() === 'karakterku') {
     const who = m.quoted?.sender || m.mentionedJid?.[0] || (m.fromMe ? conn.user.jid : m.sender);
@@ -78,7 +78,7 @@ const handler = async (m, { text, usedPrefix, command, conn }) => {
 
     return m.reply(`👤 Karakter aktif kamu saat ini:\n\n"${karakterDeskripsi.deskripsi}"`);
   }
-    
+
   try {
     const who = m.quoted?.sender || m.mentionedJid?.[0] || (m.fromMe ? conn.user.jid : m.sender);
     const nama = `@${m.sender.split('@')[0]}`;
@@ -97,10 +97,10 @@ const handler = async (m, { text, usedPrefix, command, conn }) => {
 
       karakterDeskripsi = { deskripsi: deskripsiBaru };
       fs.writeFileSync(karakterFile, JSON.stringify(karakterDeskripsi, null, 2));
-      
+
       // Reset riwayat chat jika karakter diubah agar AI tidak bingung
       if (fs.existsSync(sesiFile)) fs.unlinkSync(sesiFile);
-      
+
       return await conn.sendMessage(m.chat, {
         text: `✅ Karakter berhasil diubah! Riwayat chat sebelumnya telah direset.\nSekarang AI akan berperan sebagai:\n\n"${deskripsiBaru}"`
       });
@@ -121,8 +121,8 @@ const handler = async (m, { text, usedPrefix, command, conn }) => {
     if (fs.existsSync(sesiFile)) {
       const raw = fs.readFileSync(sesiFile, 'utf8');
       const parsedData = JSON.parse(raw);
-      
-      // Auto-migrate format Google GenAI ke OpenRouter/OpenAI format
+
+      // Auto-migrate format Google GenAI ke format OpenAI
       riwayatPercakapan = parsedData.map(msg => {
           if (msg.parts) {
               return {
@@ -130,7 +130,7 @@ const handler = async (m, { text, usedPrefix, command, conn }) => {
                   content: msg.parts[0].text
               };
           }
-          return msg; // Jika sudah format OpenRouter
+          return msg; // Jika sudah format OpenAI
       });
     }
 
@@ -143,7 +143,7 @@ const handler = async (m, { text, usedPrefix, command, conn }) => {
     }
 
     const systemInstruction = `Kamu adalah ${karakterDeskripsi.deskripsi}.
-Berperanlah sesuai karakter tersebut sepenuhnya, gunakan gaya bicara yang sesuai. 
+Berperanlah sesuai karakter tersebut sepenuhnya, gunakan gaya bicara yang sesuai.
 Nama orang yang sedang berbicara denganmu adalah ${nama}.`;
 
     const messages = [
@@ -151,7 +151,7 @@ Nama orang yang sedang berbicara denganmu adalah ${nama}.`;
       ...riwayatPercakapan
     ];
 
-    // Request ke OpenRouter
+    // Request ke 9Router lokal
     const hasil = await fetchAIResponse(messages);
 
     // Push jawaban AI ke riwayat
@@ -164,7 +164,7 @@ Nama orang yang sedang berbicara denganmu adalah ${nama}.`;
     setTimeout(() => {
       m.reply(hasil.trim());
     }, 2000);
-    
+
   } catch (err) {
     console.error(err);
     m.reply(`❌ Error terjadi:\n\n${err.message}`);

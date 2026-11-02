@@ -24,9 +24,9 @@ var fkonn = { key: { fromMe: false, participant: `0@s.whatsapp.net`, ...(m.chat 
     capt += ` ◦ *✨ Exp* : ${exp.toLocaleString('id-ID')}\n`;
     capt += ` ◦ *📊 Limit* : ${limit.toLocaleString('id-ID')}\n`;
     capt += ` ◦ *📈 Level* : ${level.toLocaleString('id-ID')}\n`;
-    capt += ` ◦ *💰 Saldo* : Rp. ${balance.toLocaleString('id-ID')}\n`;
-    capt += ` ◦ *🏧 ATM* : Rp. ${atm.toLocaleString('id-ID')}\n`;
-    capt += ` ◦ *💳 Hutang* : Rp. ${pinjaman.toLocaleString('id-ID')}\n\n`; // Menampilkan sisa hutang
+    capt += ` ◦ *💰 Saldo* : Rp${balance.toLocaleString('id-ID')}\n`;
+    capt += ` ◦ *🏧 ATM* : Rp${atm.toLocaleString('id-ID')}\n`;
+    capt += ` ◦ *💳 Hutang* : Rp${pinjaman.toLocaleString('id-ID')}\n\n`; // Menampilkan sisa hutang
     
     // Panduan command di bawah pesan
     capt += `> *${usedPrefix}atm <jumlah>* untuk menabung\n`;

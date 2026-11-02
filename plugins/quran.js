@@ -4,10 +4,10 @@
  * web: https://crax.my.id
  *
  * FIX: audio qori tidak bisa diputar di WhatsApp.
- * - Konversi ffmpeg ke opus (audio/opus, ptt:false) dihapus,
- *   karena WhatsApp tidak bisa memutar opus non-PTT dengan benar.
- * - MP3 dikirim langsung dari URL dengan mimetype 'audio/mpeg'.
- * - Fallback yang dulu pakai 'audio/mp4' untuk file .mp3 juga diperbaiki.
+ * - conn.sendFile() otomatis konversi audio ke opus non-PTT
+ *   yang tidak bisa diputar WhatsApp ("file audio bermasalah").
+ * - Sekarang kirim langsung via conn.sendMessage { audio: { url } }
+ *   seperti plugin play.js, MP3 tanpa konversi.
 **/
 
 const fetch = require('node-fetch')
@@ -88,18 +88,16 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
         await m.reply((currentMsg + footerText).trim())
       }
 
-      // Kirim Audio Full 1 Surah (MP3 langsung, mimetype audio/mpeg)
+      // Kirim Audio Full 1 Surah (langsung via sendMessage, tanpa konversi opus)
       let audioUrlFull = data.audioFull['06'] // Misyari Rasyid (Full Surah)
       if (audioUrlFull) {
         try {
-          await conn.sendFile(
-            m.chat,
-            audioUrlFull,
-            'full_surah.mp3',
-            `🔊 Audio Full Surah *${data.namaLatin}*`,
-            m,
-            { mimetype: 'audio/mpeg' }
-          )
+          await m.reply(`🔊 Audio Full Surah *${data.namaLatin}*`)
+          await conn.sendMessage(m.chat, {
+            audio: { url: audioUrlFull },
+            mimetype: 'audio/mpeg',
+            fileName: `${data.namaLatin} - Full.mp3`
+          }, { quoted: m })
         } catch (e) {
           console.error("Gagal mengirim audio full surah:", e)
           m.reply('⚠️ Gagal mengirim audio full surah.')
@@ -143,18 +141,16 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
         await m.reply(fullMessage)
       }
       
-      // Kirim Audio Spesifik Ayat (MP3 langsung, mimetype audio/mpeg)
+      // Kirim Audio Spesifik Ayat (langsung via sendMessage, tanpa konversi opus)
       let audioUrl = ayatData.audio['06'] // (1 Ayat)
       if (audioUrl) {
         try {
-          await conn.sendFile(
-            m.chat,
-            audioUrl,
-            'ayat.mp3',
-            `🔊 Audio Surah *${data.namaLatin}* Ayat ${ayat}`,
-            m,
-            { mimetype: 'audio/mpeg' }
-          )
+          await m.reply(`🔊 Audio Surah *${data.namaLatin}* Ayat ${ayat}`)
+          await conn.sendMessage(m.chat, {
+            audio: { url: audioUrl },
+            mimetype: 'audio/mpeg',
+            fileName: `${data.namaLatin} - Ayat ${ayat}.mp3`
+          }, { quoted: m })
         } catch (e) {
           console.error("Gagal mengirim audio ayat:", e)
           m.reply('⚠️ Gagal mengirim audio ayat.')

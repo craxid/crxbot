@@ -13,7 +13,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
   let time = (users.lastslot || 0) + 10000
   
   if (new Date - users.lastslot < 10000) throw `⏳ Tunggu *${msToTime(time - new Date())}*`
-  if (taruhan < 5000) throw '✳️ Minimal taruhan *Rp 5000*'
+  if (taruhan < 5000) throw '✳️ Minimal taruhan *Rp5.000*'
   if (umur < 18) throw `❎ Kamu masih di bawah umur (Min. 18 tahun)`
   if (users.money < taruhan) throw `✳️ *Uangmu* kurang`
 
@@ -25,9 +25,9 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
   // bid kecil (< 30k): digampangin menang | bid gede: rate menang dikecilin
   let winRate, drawRate
   if (taruhan < 30000) {
-    winRate = 15; drawRate = 55 // win 15%, draw 55%, lose 30%
+    winRate = 20; drawRate = 55 // win 20%, draw 55%, lose 25%
   } else {
-    winRate = 2; drawRate = 40 // win 2%, draw 40%, lose 58%
+    winRate = 5; drawRate = 40 // win 5%, draw 40%, lose 55%
   }
 
   let chance = Math.random() * 100;
@@ -150,5 +150,5 @@ function msToTime(duration) {
 }
 
 function formatRupiah(angka) {
-  return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return 'Rp' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }

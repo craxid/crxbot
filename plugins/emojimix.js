@@ -22,12 +22,12 @@ try {
         packname: global.packname, 
         author: global.author,
         isAiSticker: true,
-        "android-app-store-link": "https://play.google.com/store/apps/details?id=me.pou.app", 
+        "android-play-store-link": "https://play.google.com/store/apps/details?id=me.pou.app", 
         "ios-app-store-link": "https://apps.apple.com/app/whatsapp-messenger/id310633997"
     })
 
     await conn.sendPresenceUpdate('composing', m.chat)
-    await fs.unlinkSync(tes)
+    if (typeof tes == "string" && fs.existsSync(tes)) fs.unlinkSync(tes)
 
 } catch (err) {
     console.log (err)

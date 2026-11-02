@@ -119,7 +119,7 @@ function groupByVolume(chapters) {
 
 // Unduh halaman-halaman satu chapter ke folder tujuan, return daftar file
 async function downloadChapterPages(chapterId, outDir, onProgress) {
-  const panels = await md.getChapterPages(chapterId);
+  const panels = await md.pages(chapterId);
   if (!panels || !panels.length) throw new Error('Gagal memuat halaman dari server.');
   const files = [];
   for (let i = 0; i < panels.length; i++) {
@@ -212,7 +212,7 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
     let info;
     if (!isUuid(target)) {
       await editLoading(`🔍 *Mencari:* ${target}...`);
-      const results = await md.searchManga(target, 10);
+      const results = await md.search(target, 10);
       if (!results.length) return await editLoading(`❌ Tidak ditemukan: *${target}*`);
       global.mangadexSearch[m.chat] = results.map(r => r.id);
       let txt = `🔍 *Hasil Pencarian MangaDex: ${target}*\n\n`;
@@ -231,7 +231,7 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
     const res = await fetch(`${md.BASE}/manga/${mangaId}?includes[]=cover_art&includes[]=author`);
     const json = await res.json();
     if (json.result !== 'ok') throw new Error('Manga tidak ditemukan di database server.');
-    info = md.parseManga(json.data);
+    info = md.detail(json.data);
     const mangaTitle = info.title.en || Object.values(info.title)[0] || info.id;
 
     // ---------- validasi bahasa ----------
@@ -368,7 +368,7 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
     fs.mkdirSync(outDir, { recursive: true });
 
     await editLoading(`⏳ *Mencari chapter ${chapterArg} (prioritas bahasa: ${langs.join(', ')})...*`);
-    const selectedChapter = await md.getSpecificChapter(info.id, chapterArg, langs);
+    const selectedChapter = await md.chapter(info.id, chapterArg, langs);
 
     if (!selectedChapter) {
       const haveLangs = await chapterLanguages(info.id, chapterArg);

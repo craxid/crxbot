@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { Sticker, StickerTypes } = require('wa-sticker-formatter');
+const { addExif } = require('../lib/sticker');
 
 const handler = async (m, { conn, args, text }) => {
     var arr = ["atas", "bawah"];
@@ -66,5 +67,7 @@ async function createSticker(img, url, wm, author, quality) {
         author: author,
         quality
     };
-    return (new Sticker(img ? img : url, stickerMetadata)).toBuffer();
+    let built = await (new Sticker(img ? img : url, stickerMetadata)).toBuffer();
+    // WSF ga nulis link store di EXIF, tempel di sini
+    return await addExif(built, wm, author);
 }

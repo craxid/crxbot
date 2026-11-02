@@ -11,10 +11,10 @@ let handler = async (m, { conn, command, usedPrefix }) => {
             packname: global.packname,
             author: global.author,
             isAiSticker: true,
-            "android-app-store-link": "https://play.google.com/store/apps/details?id=me.pou.app", 
+            "android-play-store-link": "https://play.google.com/store/apps/details?id=me.pou.app", 
             "ios-app-store-link": "https://apps.apple.com/app/whatsapp-messenger/id310633997"
         })
-        await fs.unlinkSync(encmedia)
+        if (typeof encmedia == "string" && fs.existsSync(encmedia)) fs.unlinkSync(encmedia)
     } else if (/video/.test(mime)) {
         if ((q.msg || q).seconds > 8) return m.reply('maksimal 8 detik!')
         let media = await q.download()
@@ -23,12 +23,12 @@ let handler = async (m, { conn, command, usedPrefix }) => {
             packname: global.packname,
             author: global.author,
             isAiSticker: true,
-            "android-app-store-link": "https://play.google.com/store/apps/details?id=me.pou.app", 
+            "android-play-store-link": "https://play.google.com/store/apps/details?id=me.pou.app", 
             "ios-app-store-link": "https://apps.apple.com/app/whatsapp-messenger/id310633997" 
         })
-        await fs.unlinkSync(encmedia)
+        if (typeof encmedia == "string" && fs.existsSync(encmedia)) fs.unlinkSync(encmedia)
     } else {
-        throw `Kirim Gambar/Video Dengan Caption ${usedPrefix + command}\nDurasi Video 1-6 Detik`
+        throw `Kirim Gambar/Video Dengan Caption ${usedPrefix + command}\nDurasi Video 1-8 Detik`
     }
 }
 

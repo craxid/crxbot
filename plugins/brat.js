@@ -10,7 +10,7 @@ let handler = async (m, { conn, args }) => {
     m.reply(stiker_wait)
     let stickerId = m.sender.replace(/[^0-9]/g, '')
     let categories = ['AI-' + stickerId.slice(0, 3)]
-    let encmedia = await conn.sendImageAsSticker(m.chat, buffer, m, { packname: global.packname, author: global.author, isAiSticker: true, stickerId: stickerId, categories: categories })
+    let encmedia = await conn.sendImageAsSticker(m.chat, buffer, m, { packname: global.packname, author: global.author, isAiSticker: true, stickerId: stickerId, categories: categories, "android-play-store-link": "https://play.google.com/store/apps/details?id=me.pou.app", "ios-app-store-link": "https://apps.apple.com/app/whatsapp-messenger/id310633997" })
     await fs.unlinkSync(encmedia)
   } catch (error) {
     console.error(`Error: ${error}`)

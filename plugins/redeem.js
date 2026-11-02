@@ -102,21 +102,30 @@ let handler = async (m, { conn, isPrems }) => {
 
     if (foundKey) {
         let rd = redeemDb[foundKey];
-        if (rd.users.length >= rd.quota) return m.reply('❌ Kamu telat nih kuotanya udah habis');
-        if (rd.users.includes(m.sender)) return m.reply('❌ Kamu sudah klaim kode ini!');
+        if (rd.users.length >= rd.quota) return m.reply('❌ *Kuota kode ini sudah habis.*\n\nCoba kode lain atau hubungi owner.');
+        if (rd.users.includes(m.sender)) {
+            // kasih tau sisa premiumnya biar user gak nanya2 kapan habisnya
+            let sisaMs = (user.premiumTime || 0) - now.getTime();
+            let infoSisa = '';
+            if (sisaMs > 0) {
+                let habis = new Date(user.premiumTime).toLocaleString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(',', '');
+                infoSisa = `\n\n⏳ Sisa premium: ${sisaSingkat(sisaMs)}\n📅 Habis: ${habis} WIB`;
+            }
+            return m.reply(`❌ *Kamu sudah klaim kode ini.*\n\nSatu kode cuma bisa dipakai sekali.${infoSisa}`);
+        }
 
         // kalo tipenya money, langsung kasih reward yg ada aja
         if (rd.type === 'money') {
             let dapet = [];
-            if ((rd.money || 0) > 0) { user.money += rd.money; dapet.push(`+ Rp ${rd.money.toLocaleString('id-ID')} money`); }
+            if ((rd.money || 0) > 0) { user.money += rd.money; dapet.push(`+ Rp${rd.money.toLocaleString('id-ID')} money`); }
             if ((rd.limit || 0) > 0) { user.limit += rd.limit; dapet.push(`+ ${rd.limit.toLocaleString('id-ID')} limit`); }
             rd.users.push(m.sender);
 
-            return m.reply(`💰 *Redeem berhasil!*\n\n${dapet.join('\n')}\nKuota: ${rd.users.length}/${rd.quota}`);
+            return m.reply(`💰 *Redeem berhasil!*\n\n🎟️ Kode: ${foundKey}\n${dapet.join('\n')}\n👥 Kuota: ${rd.users.length}/${rd.quota}`);
         }
 
         // sisanya tipe premium
-        if (user.premium && user.premiumTime > now.getTime()) return m.reply('❌ Premium kamu masih jalan, tunggu habis dulu baru klaim lagi!');
+        if (user.premium && user.premiumTime > now.getTime()) return m.reply('❌ *Premium kamu masih aktif.*\n\nTunggu sampai habis dulu baru bisa klaim kode lagi.');
 
         let durasiMs = rd.duration * 86400000;
         user.premium = true;
@@ -125,10 +134,12 @@ let handler = async (m, { conn, isPrems }) => {
 
         if (!global.prems.includes(jid)) global.prems.push(jid);
 
-        return m.reply(`✨ *Premium aktif!*\n\n${rd.duration} hari, sampai ${new Date(user.premiumTime).toLocaleString('id-ID')} WIB\nKuota: ${rd.users.length}/${rd.quota}`);
+        // tanggal dibikin rapi, detiknya dibuang biar enak dibaca
+        let sampai = new Date(user.premiumTime).toLocaleString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(',', '');
+        return m.reply(`✨ *Premium aktif!*\n\n🎟️ Kode: ${foundKey}\n⏳ Durasi: ${rd.duration} hari\n📅 Sampai: ${sampai} WIB\n👥 Kuota: ${rd.users.length}/${rd.quota}`);
     }
 
-    return m.reply(`❌ Kodenya salah.\n\nCek list kode: .cekredeem`);
+    return m.reply(`❌ *Kodenya salah.*\n\nCek list kode: .cekredeem`);
 };
 
 handler.help = ['redeem'];
@@ -144,4 +155,14 @@ function msToTime(duration) {
         hours = Math.floor((duration / (1000 * 60 * 60)) % 24), 
         days = Math.floor((duration / (1000 * 60 * 60 * 24)));
     return `${days} hari ${hours} jam ${minutes} menit ${seconds} detik`;
+}
+
+// versi ringkas buat info sisa premium, gak usah sampe detik
+function sisaSingkat(ms) {
+    let menit = Math.floor(ms / 60000);
+    let jam = Math.floor(menit / 60), hari = Math.floor(jam / 24);
+    menit %= 60; jam %= 24;
+    if (hari > 0) return `${hari} hari ${jam} jam`;
+    if (jam > 0) return `${jam} jam ${menit} menit`;
+    return `${menit} menit`;
 }

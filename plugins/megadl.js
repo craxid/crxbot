@@ -1,47 +1,47 @@
 const { File } = require('megajs');
-// Kita tidak perlu lagi 'file-type' karena untuk stream, 
-// WhatsApp sudah otomatis mendeteksi tipe file dari properti fileName.
+
+function getMime(nama) {
+  const ext = nama.split('.').pop().toLowerCase();
+  const mimes = {
+    mp4: 'video/mp4', mkv: 'video/x-matroska', avi: 'video/x-msvideo',
+    mov: 'video/quicktime', webm: 'video/webm', '3gp': 'video/3gpp',
+    mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg',
+    m4a: 'audio/mp4', flac: 'audio/flac', aac: 'audio/aac',
+    jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+    gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp',
+    pdf: 'application/pdf', zip: 'application/zip',
+    rar: 'application/x-rar-compressed', '7z': 'application/x-7z-compressed',
+    apk: 'application/vnd.android.package-archive',
+    txt: 'text/plain', doc: 'application/msword',
+    epub: 'application/epub+zip'
+  };
+  return mimes[ext] || 'application/octet-stream';
+}
 
 let handler = async (m, { conn, args, usedPrefix, command }) => {
   conn.room = conn.room ? conn.room : {};
-  
-  if (!args[0]) return m.reply(`Masukkan Url!\n\nContoh :\n${usedPrefix + command} https://mega.nz/file/FltHDCzD#oNm8SD_e9oFTCczmnEW4zB9gsakSGzVaVtd9euj7yK8`);
-  
-  if (!/mega\.nz/i.test(args[0])) return m.reply('URL tidak valid! Harap masukkan link Mega.nz yang benar.');
-
+  if (!args[0]) return m.reply('Masukkan Url!');
+  if (!/mega\.nz/i.test(args[0])) return m.reply('URL tidak valid!');
   let id = 'mega_' + m.sender;
-  if (id in conn.room) return m.reply('Tunggu sebentar, kamu masih memiliki unduhan yang sedang berjalan!');
-  
+  if (id in conn.room) return m.reply('Tunggu sebentar!');
   conn.room[id] = true;
-  
   try {
-    m.reply('_⏳ Sedang membaca metadata file, harap tunggu..._');
-    
-    let file = File.fromURL(args[0]);
+    m.reply(wait);
+    let megaUrl = args[0]; try { megaUrl = decodeURIComponent(megaUrl); } catch(e) {}
+    let file = File.fromURL(megaUrl);
     await file.loadAttributes();
-
-    // Limit ukuran file diubah ke 500 MB (atau sesuaikan dengan kebutuhanmu)
-    // Karena kita pakai stream, bot tidak akan crash, tapi WhatsApp punya limit pengiriman dokumen (~2GB)
-    const MAX_SIZE = 500 * 1024 * 1024; // 500 MB
-    if (file.size > MAX_SIZE) {
-      return m.reply(`❌ Ukuran file terlalu besar untuk dikirim via WhatsApp! (Maksimal 500MB)\n\nNama: ${file.name}\nUkuran: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
-    }
-
-    m.reply(`_📥 Mengunduh & mengirim file: *${file.name}* (${(file.size / 1024 / 1024).toFixed(2)} MB)..._\n\n_Proses ini tidak akan memakan RAM servermu._`);
-
-    // Ganti downloadBuffer() menjadi download() untuk mendapatkan Readable Stream
+    const MAX_SIZE = 500 * 1024 * 1024;
+    if (file.size > MAX_SIZE) return m.reply('File terlalu besar (maks 500MB)');
     let stream = file.download();
-
-    // Kirim langsung menggunakan stream ke WhatsApp (kompatibel dengan Baileys terbaru)
-    await conn.sendMessage(m.chat, { 
-      document: { stream: stream }, 
-      fileName: file.name, 
-      mimetype: 'application/octet-stream' // WA akan membaca mime dari ekstensi file.name
+    await conn.sendMessage(m.chat, {
+      document: { stream: stream },
+      fileName: file.name,
+      mimetype: getMime(file.name),
+      caption: '*' + file.name + '*\n' + (file.size / 1024 / 1024).toFixed(2) + ' MB'
     }, { quoted: m });
-
   } catch (e) {
     console.log(e);
-    m.reply(`❌ Terjadi Kesalahan\n\n${e.message || e}`);
+    m.reply('Terjadi Kesalahan\n\n' + (e.message || e));
   } finally {
     delete conn.room[id];
   }
@@ -52,5 +52,4 @@ handler.tags = ['downloader'];
 handler.limit = true;
 handler.register = true;
 handler.command = /^mega(dl)?$/i;
-
 module.exports = handler;

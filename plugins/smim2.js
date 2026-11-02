@@ -52,7 +52,9 @@ let handler = async (m, { conn, text, usedPrefix, command}) => {
     let stiker = await sticker(null, memeBuffer, global.packname, global.author)
     await conn.sendImageAsSticker(m.chat, memeBuffer, m, {
       packname: global.packname,
-      author: global.author
+      author: global.author,
+      "android-play-store-link": "https://play.google.com/store/apps/details?id=me.pou.app",
+      "ios-app-store-link": "https://apps.apple.com/app/whatsapp-messenger/id310633997"
 })
 
     await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key}})

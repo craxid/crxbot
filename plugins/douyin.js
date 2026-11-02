@@ -1,4 +1,4 @@
-const { douyin } = require('../lib/resapi');
+const { douyin } = require('../lib/douyin');
 
 let handler = async (m, { conn, args, usedPrefix, command}) => {
   if (!args[0]) throw `✳️ Contoh:\n *${usedPrefix + command}* https://v.douyin.com/0bPUHvviqss/`;

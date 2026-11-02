@@ -27,7 +27,7 @@ ${sn}
 `.trim())
 }
 handler.help = ['daftar', 'reg', 'register'].map(v => v + ' <nama>.<umur>')
-handler.tags = ['xp']
+handler.tags = ['main']
 
 handler.command = /^(daftar|reg(ister)?)$/i
 

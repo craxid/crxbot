@@ -38,7 +38,6 @@ var fkonn = { key: { fromMe: false, participant: `0@s.whatsapp.net`, ...(m.chat 
 *Diamond* : ${user.diamond}
 *Emas* : ${user.emas}
 *Iron* : ${user.iron}
-*Berlian* : ${user.berlian}
 *Emerald* : ${user.emerald}
 *Litecoin* : ${user.litecoin}
 *Tiketcoin* : ${user.tiketcoin}

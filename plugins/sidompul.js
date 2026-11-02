@@ -38,7 +38,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
         const response = await axios.get(apiUrl, {
             headers: {
                 'Authorization': 'Basic c2lkb21wdWxhcGk6YXBpZ3drbXNw',
-                'X-API-Key': 'ISI_API_KEY_DISINI',
+                'X-API-Key': '60ef29aa-a648-4668-90ae-20951ef90c55',
                 'X-App-Version': '4.0.0'
             }
         });

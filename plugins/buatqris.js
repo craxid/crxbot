@@ -79,7 +79,7 @@ let handler = async (m, { conn, args }) => {
       .toFormat("png")
       .toFile(finalFilePath);
 
-    let caption = `🎉 *QRIS Berhasil Dibuat!* 🎉\n\n• Nominal: Rp ${nominal.toLocaleString("id-ID")},-\n• Tujuan: CraXID Project\n\nSilakan scan QRIS di atas untuk melakukan pembayaran. 📸\n\n_Pesan ini akan dihapus dalam 5 menit._`;
+    let caption = `🎉 *QRIS Berhasil Dibuat!* 🎉\n\n• Nominal: Rp${nominal.toLocaleString("id-ID")},-\n• Tujuan: CraXID Project\n\nSilakan scan QRIS di atas untuk melakukan pembayaran. 📸\n\n_Pesan ini akan dihapus dalam 5 menit._`;
 
     let buffer = fs.readFileSync(finalFilePath);
 

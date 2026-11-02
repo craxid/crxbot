@@ -14,7 +14,7 @@ const handler = async (m, { text, conn }) => {
         senderId: who,
         senderName: senderName,
         text: text,
-        model: "ddgw/gpt-5.4-mini",
+        model: "bzl/gpt-5.4-mini",
         aiName: "a helpful assistant",
         sesiPrefix: "chatgpt"
     });

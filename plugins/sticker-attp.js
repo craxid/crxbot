@@ -15,7 +15,7 @@ var handler = async (m, {
     var error = fs.readFileSync(`./media/sticker/emror.webp`)
     try {
         if (command == 'attp' || command == 'attp') {
-            var stiker = await sticker5(res, { packname })
+            var stiker = await sticker5(res, null, global.packname, global.author)
             await conn.sendFile(m.chat, stiker, 'emror.webp', '', m)
         }
     } catch (e) {

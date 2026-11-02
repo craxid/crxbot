@@ -6,8 +6,8 @@ let handler = async (m, { conn, command, args }) => {
   if (global.db.data.users[m.sender].bank >= moneymins * count) {
     global.db.data.users[m.sender].bank -= moneymins * count
     global.db.data.users[m.sender].money += count
-    conn.reply(m.chat, `Berhasil menarik uang *Rp. ${count}* dari ATM`, m)
-  } else conn.reply(m.chat, `🚩 Uang kamu kurang dari *Rp. ${count}* di ATM`, m)
+    conn.reply(m.chat, `Berhasil menarik uang *Rp${count.toLocaleString('id-ID')}* dari ATM`, m)
+  } else conn.reply(m.chat, `🚩 Uang kamu kurang dari *Rp${count.toLocaleString('id-ID')}* di ATM`, m)
 }
 handler.help = ['pull *<amount>*', 'pullall']
 handler.tags = ['rpg']

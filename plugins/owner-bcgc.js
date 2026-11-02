@@ -15,7 +15,11 @@ let handler = async (m, { conn, isROwner, text }) => {
     let pesan = (m.quoted && m.quoted.text) ? m.quoted.text : text
     
     if (!pesan && !/image/.test(mime)) throw 'Teks atau gambarnya mana?'
-    
+
+    // kasih header broadcast di paling atas pesannya
+    let headerBc = '*[ B R O A D C A S T ]*'
+    pesan = pesan ? `${headerBc}\n\n${pesan}` : headerBc
+
     m.reply(`Mengirim Broadcast Ke ${anu.length} Chat, Estimasi Waktu ${anu.length * 0.5 } detik`)
     
     // Jika ada gambar, download medianya terlebih dahulu

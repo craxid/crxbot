@@ -25,10 +25,10 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
         let stiker
         if (/video/g.test(mime) || (q.msg || q).seconds) {
             // Menggunakan sendVideoAsSticker jika tersedia, ditambah tag AI
-            stiker = await conn.sendVideoAsSticker(m.chat, img, m, { packname, author, isAiSticker: true })
+            stiker = await conn.sendVideoAsSticker(m.chat, img, m, { packname, author, isAiSticker: true, "android-play-store-link": "https://play.google.com/store/apps/details?id=me.pou.app", "ios-app-store-link": "https://apps.apple.com/app/whatsapp-messenger/id310633997" })
         } else {
             // Menggunakan sendImageAsSticker untuk gambar/stiker statis, ditambah tag AI
-            stiker = await conn.sendImageAsSticker(m.chat, img, m, { packname, author, isAiSticker: true })
+            stiker = await conn.sendImageAsSticker(m.chat, img, m, { packname, author, isAiSticker: true, "android-play-store-link": "https://play.google.com/store/apps/details?id=me.pou.app", "ios-app-store-link": "https://apps.apple.com/app/whatsapp-messenger/id310633997" })
         }
 
         // Tambahkan reaksi sukses setelah selesai
@@ -43,7 +43,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
             let img = await q.download()
             // Menambahkan parameter tag AI di fungsi fallback sticker()
             // Urutan parameter: img, url, packname, author, categories, extra
-            let buff = await sticker(img, false, text || global.wm, m.name, [''], { isAiSticker: true })
+            let buff = await sticker(img, false, text || global.wm, m.name, [''], { isAiSticker: true, "android-play-store-link": "https://play.google.com/store/apps/details?id=me.pou.app", "ios-app-store-link": "https://apps.apple.com/app/whatsapp-messenger/id310633997" })
             await conn.sendFile(m.chat, buff, 'sticker.webp', '', m)
         } catch (err) {
             throw 'Gagal!, Balas Gambar/video dengan caption *.stiker*'

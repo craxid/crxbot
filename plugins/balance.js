@@ -12,7 +12,7 @@ setTimeout (() => {
     conn.reply(m.chat, `
 ┌───⊷ *BALANCE* ⊶
 ▢ *📌 Nama*: _@${who.split('@')[0]}_
-▢ *💰 Uang*: Rp ${user.money.toLocaleString('id-ID')},-
+▢ *💰 Uang*: Rp${user.money.toLocaleString('id-ID')},-
 ▢ *🔗 Limit*: ${user.limit.toLocaleString('id-ID')}
 ▢ *⬆️ XP*: Total ${user.exp.toLocaleString('id-ID')}
 └──────────────
@@ -22,7 +22,7 @@ Kamu bisa beli 🔗 Limit dengan perintah
 ❏ *${usedPrefix}buy <jumlah>*
 ❏ *${usedPrefix}buyall*
 
-Harga 1 Limit adalah Rp1000,-`, m, { mentions: [who] })
+Harga 1 Limit adalah Rp1.000,-`, m, { mentions: [who] })
 }, 3000)
 }
 handler.help = ['balance']

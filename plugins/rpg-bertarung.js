@@ -23,7 +23,7 @@ let handler = async (m, { conn, args, usedPrefix, command}) => {
   let opponentName = await conn.getName(opponent)
 
   let pesanAwal = await conn.sendMessage(m.chat, {
-    text: `⚔️ Hai @${opponent.split('@')[0]}, ${senderName} menantangmu bertarung!\n\n💰 Taruhan: Rp ${betAmount.toLocaleString('id-ID')}\n\nKetik *ya* untuk menerima atau *tidak* untuk menolak. (60 detik)`,
+    text: `⚔️ Hai @${opponent.split('@')[0]}, ${senderName} menantangmu bertarung!\n\n💰 Taruhan: Rp${betAmount.toLocaleString('id-ID')}\n\nKetik *ya* untuk menerima atau *tidak* untuk menolak. (60 detik)`,
     mentions: [opponent]
 }, { quoted: m})
 
@@ -106,8 +106,8 @@ handler.before = async function (m, { conn}) {
 
     let hasil = `❏ *F I G H T*\n\n@${from.split('@')[0]} vs @${m.sender.split('@')[0]}\n\n`
     hasil += result
-? `🏆 @${from.split('@')[0]} menang! ${alasanMenang} +Rp ${betAmount.toLocaleString('id-ID')}`
-: `💀 @${from.split('@')[0]} kalah! ${alasanKalah} -Rp ${betAmount.toLocaleString('id-ID')}`
+? `🏆 @${from.split('@')[0]} menang! ${alasanMenang} +Rp${betAmount.toLocaleString('id-ID')}`
+: `💀 @${from.split('@')[0]} kalah! ${alasanKalah} -Rp${betAmount.toLocaleString('id-ID')}`
 
     await conn.sendMessage(chat, {
       edit: msg,

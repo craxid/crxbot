@@ -8,11 +8,14 @@ let handler = async (m, { conn, participants, groupMetadata, text }) => {
         return admins
     }
 
-    let pp = 'https://telegra.ph/file/3c1ea5866a11088685413.jpg'
+    // ambil foto profil grup (nama fungsi di baileys 7.x: profilePictureUrl)
+    let pp = null
     try {
-        pp = await conn.getProfilePicture(m.chat)
+        pp = await conn.profilePictureUrl(m.chat)
     } catch (e) {
-    } finally {
+        // grup tidak punya foto, nanti kirim teks saja
+    }
+    try {
         let { isBanned, welcome, detect, sWelcome, sBye, sPromote, sDemote, antiLink, expired, descUpdate, stiker } = global.db.data.chats[m.chat]
         const groupAdmins = getGroupAdmins(participants)
         let listAdmin = groupAdmins.map((v, i) => `${i + 1}. @${v.split`@`[0]}`).join('\n')
@@ -49,7 +52,15 @@ Demote: ${sDemote}
 ${msToDate(expired - new Date() * 1)}
 `.trim()
         let mentionedJid = groupAdmins.concat([`${m.chat.split`-`[0]}@s.whatsapp.net`])
-        conn.sendFile(m.key.remoteJid, pp, 'pp.jpg', caption, m, 0, { contextInfo: { mentionedJid } })
+        // kalau ada foto grup kirim dengan gambar, kalau tidak kirim teks saja
+        if (pp) {
+            await conn.sendFile(m.key.remoteJid, pp, 'pp.jpg', caption, m, 0, { contextInfo: { mentionedJid } })
+        } else {
+            await conn.sendMessage(m.key.remoteJid, { text: caption, mentions: mentionedJid }, { quoted: m })
+        }
+    } catch (e) {
+        console.error('infogrup error:', e)
+        await m.reply('❌ Gagal mengambil info grup.')
     }
 }
 handler.help = ['infogrup']

@@ -12,7 +12,7 @@ let handler = async (m, { conn }) => {
   let bannedUsers = Object.entries(global.db.data.users).filter(user => user[1].banned).length
   let stats = Object.entries(db.data.stats).length
   let dbArg = global.opts && global.opts.db || ''
-  let dbType = /mongodb/i.test(dbArg) ? 'MongoDB Atlas' : /https?:\/\//.test(dbArg) ? 'Cloud DB' : 'Lokal (JSON)'
+  let dbType = /mongodb/i.test(dbArg) ? 'MongoDB Atlas' : /https?:\/\//.test(dbArg) ? 'Cloud DB' : 'Lokal'
 
   let tegs = `*🤖 INFO BOT* 
   
@@ -21,7 +21,7 @@ let handler = async (m, { conn }) => {
 *👥 Pengguna Terdaftar:* ${users} 
 *🚫 Pengguna Terbanned:* ${bannedUsers}
 *📈 Fitur Sering Digunakan:* ${stats}
-*Database:* ${dbType}
+*💾 Database:* ${dbType}
 
 _🔧 Jika bot tidak ada balasan maka bot sedang maintenance._`.trim()
 

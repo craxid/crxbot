@@ -23,7 +23,6 @@ let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isR
     case 'antisticker':
     case 'autosticker':
     case 'antitoxic':
-    case 'antitaggc':
     case 'viewonce':
       requireAdmin()
       if (type === 'antidelete') chat.antidelete = isEnable

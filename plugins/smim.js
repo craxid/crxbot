@@ -40,7 +40,7 @@ let handler = async (m, { conn, text, usedPrefix, command}) => {
       packname: global.packname,
       author: global.author,
       isAiSticker: true,
-      "android-app-store-link": "https://play.google.com/store/apps/details?id=me.pou.app", 
+      "android-play-store-link": "https://play.google.com/store/apps/details?id=me.pou.app", 
       "ios-app-store-link": "https://apps.apple.com/app/whatsapp-messenger/id310633997"
     })
     // ================================
