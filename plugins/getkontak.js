@@ -4,7 +4,7 @@ const crypto = require('crypto');
 
 // ==========================================
 // WAJIB DIISI! (Kalau kosong bakal kena error)
-const TOKEN_SAYA = global.gtctkn; 
+const TOKEN_SAYA = global.gtctkn;
 const KUNCI_AKHIR = global.gtckey;
 // ==========================================
 
@@ -21,6 +21,7 @@ function _buka() {
   return JSON.parse(r);
 }
 const _cfg = _buka();
+const BASE_URL = _cfg.u.split('/search')[0];
 
 function enkripsiData(teks, kunci) {
   return CryptoJS.AES.encrypt(teks, CryptoJS.enc.Hex.parse(kunci), { mode: CryptoJS.mode.ECB }).toString();
@@ -42,119 +43,175 @@ function formatNomorHP(nomor) {
   return nomor;
 }
 
+function headerUntuk(waktu, body) {
+  return {
+    'Content-Type': 'application/json',
+    'X-Os': 'android 9',
+    'X-Mobile-Service': 'GMS',
+    'X-App-Version': '5.6.2',
+    'X-Client-Device-Id': _cfg.d,
+    'X-Lang': 'in_ID',
+    'X-Token': TOKEN_SAYA,
+    'X-Req-Timestamp': waktu,
+    'X-Encrypted': '1',
+    'X-Network-Country': 'id',
+    'X-Country-Code': 'id',
+    'X-Req-Signature': buatTandaTangan(waktu, body),
+  };
+}
+
+// satu pintu buat semua panggilan ke server GetContact.
+// kalo server lagi minta validasi (errorCode 403004), error-nya dilempar
+// dengan kode CAPTCHA plus gambar tantangannya, biar handler bisa nerusin
+// gambarnya ke user dan user yang jawab sendiri.
+async function panggilApi(path, payload) {
+  const waktu = Date.now().toString();
+  const body = JSON.stringify(payload);
+  const res = await axios.post(BASE_URL + path, { data: enkripsiData(body, KUNCI_AKHIR) }, {
+    headers: headerUntuk(waktu, body),
+    timeout: 20000,
+    validateStatus: () => true,
+  });
+
+  let hasil;
+  try {
+    hasil = JSON.parse(dekripsiData(res.data.data, KUNCI_AKHIR));
+  } catch (e) {
+    throw new Error('Respons GetContact tidak bisa dibaca');
+  }
+
+  const meta = hasil.meta || {};
+  if (meta.errorCode === '403004') {
+    const err = new Error(meta.errorMessage || 'Validasi pengguna diperlukan.');
+    err.kode = 'CAPTCHA';
+    err.gambar = hasil.result && hasil.result.image;
+    throw err;
+  }
+  if (meta.httpStatusCode === 404) return { tidakDitemukan: true, hasil };
+  if (meta.errorMessage) throw new Error(meta.errorMessage);
+  if (res.status >= 400) throw new Error(`Request ditolak (Status: ${res.status})`);
+  return { hasil };
+}
+
+// kirim kode captcha yang dijawab user. kalo kodenya salah, server bales
+// 403004 lagi plus gambar baru (di panggilApi udah jadi error CAPTCHA).
+async function verifyKode(kode) {
+  return panggilApi('/verify-code', { validationCode: kode, token: TOKEN_SAYA });
+}
+
 async function cariNomor(nomorHP) {
   if (!TOKEN_SAYA || !KUNCI_AKHIR) {
     throw new Error('TOKEN_SAYA dan KUNCI_AKHIR belum diisi di dalam config.js!');
   }
 
   const nomor = formatNomorHP(nomorHP);
-  const isiRequest = { countryCode: 'id', phoneNumber: nomor, source: 'search', token: TOKEN_SAYA };
-  const waktu = Date.now().toString();
-  const body = JSON.stringify(isiRequest);
-  const tanda = buatTandaTangan(waktu, body);
-  const terenkripsi = enkripsiData(body, KUNCI_AKHIR);
 
-  try {
-    // 1. TEMBUS ENDPOINT PROFIL (/search)
-    const res = await axios.post(_cfg.u, { data: terenkripsi }, {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Os': 'android 9',
-        'X-Mobile-Service': 'GMS',
-        'X-App-Version': '5.6.2', 
-        'X-Client-Device-Id': _cfg.d,
-        'X-Lang': 'in_ID',
-        'X-Token': TOKEN_SAYA,
-        'X-Req-Timestamp': waktu,
-        'X-Encrypted': '1',
-        'X-Network-Country': 'id',
-        'X-Country-Code': 'id',
-        'X-Req-Signature': tanda,
-      },
-    });
+  // 1. TEMBUS ENDPOINT PROFIL (/search)
+  const { hasil, tidakDitemukan } = await panggilApi('/search', {
+    countryCode: 'id', phoneNumber: nomor, source: 'search', token: TOKEN_SAYA
+  });
 
-    const hasil = JSON.parse(dekripsiData(res.data.data, KUNCI_AKHIR));
-    const profil = hasil.result?.profile || {};
+  if (tidakDitemukan) {
     const kuota = hasil.result?.subscriptionInfo?.usage?.search || {};
-    let daftarTag = [];
-
-    // 2. TEMBUS ENDPOINT TAG (/number-detail) - Khusus Free User Bypass
-    if (profil.tagCount > 0) {
-      try {
-        // Ekstrak URL dasar dengan aman lalu tambahkan /tags
-        const baseUrl = _cfg.u.split('/search')[0];
-        const urlTags = baseUrl + '/number-detail'; 
-        
-        // Payload murni tanpa embel-embel pagination agar tidak disangka request Premium
-        const isiReqTags = { 
-          countryCode: 'id', 
-          phoneNumber: nomor, 
-          token: TOKEN_SAYA
-        };
-        
-        const waktuTags = Date.now().toString();
-        const bodyTags = JSON.stringify(isiReqTags);
-        const tandaTags = buatTandaTangan(waktuTags, bodyTags);
-        const terenkripsiTags = enkripsiData(bodyTags, KUNCI_AKHIR);
-
-        const resTags = await axios.post(urlTags, { data: terenkripsiTags }, {
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Os': 'android 9',
-            'X-Mobile-Service': 'GMS',
-            'X-App-Version': '5.6.2',
-            'X-Client-Device-Id': _cfg.d,
-            'X-Lang': 'in_ID',
-            'X-Token': TOKEN_SAYA,
-            'X-Req-Timestamp': waktuTags,
-            'X-Encrypted': '1',
-            'X-Network-Country': 'id',
-            'X-Country-Code': 'id',
-            'X-Req-Signature': tandaTags,
-          },
-        });
-
-        const hasilTags = JSON.parse(dekripsiData(resTags.data.data, KUNCI_AKHIR));
-        if (hasilTags.result?.tags && Array.isArray(hasilTags.result.tags)) {
-          daftarTag = hasilTags.result.tags.map(t => t.name || t.tag);
-        }
-      } catch (errTags) {
-        // Abaikan secara diam-diam jika gagal
-      }
-    }
-
-    return {
-      nomor: profil.phoneNumber || nomor,
-      nama: profil.displayName || null,
-      jumlahTag: profil.tagCount || 0,
-      badge: hasil.result?.badge || null,
-      spam: hasil.result?.spamInfo?.degree || 'aman',
-      sisaKuota: kuota.remainingCount,
-      batasKuota: kuota.limit,
-      tags: daftarTag 
-    };
-  } catch (err) {
-    if (err.response?.data?.data) {
-      const hasil = JSON.parse(dekripsiData(err.response.data.data, KUNCI_AKHIR));
-      const meta = hasil.meta || {};
-      if (meta.httpStatusCode === 404) {
-        const kuota = hasil.result?.subscriptionInfo?.usage?.search || {};
-        return { nomor, nama: null, jumlahTag: 0, badge: null, spam: 'aman', sisaKuota: kuota.remainingCount, batasKuota: kuota.limit, tags: [], tidakDitemukan: true };
-      }
-      throw new Error(meta.errorMessage || `Request ditolak (Status: ${err.response.status})`);
-    }
-    throw new Error(err.message || 'Gagal terhubung ke GetContact');
+    return { nomor, nama: null, jumlahTag: 0, badge: null, spam: 'aman', sisaKuota: kuota.remainingCount, batasKuota: kuota.limit, tags: [], tidakDitemukan: true };
   }
+
+  const profil = hasil.result?.profile || {};
+  const kuota = hasil.result?.subscriptionInfo?.usage?.search || {};
+  let daftarTag = [];
+
+  // 2. TEMBUS ENDPOINT TAG (/number-detail)
+  if (profil.tagCount > 0) {
+    try {
+      const detail = await panggilApi('/number-detail', {
+        countryCode: 'id', phoneNumber: nomor, source: 'details', token: TOKEN_SAYA
+      });
+      const tags = detail.hasil?.result?.tags;
+      if (Array.isArray(tags)) daftarTag = tags.map(t => t.name || t.tag);
+    } catch (errTags) {
+      // kalo server minta validasi, jangan ditelan: handler perlu gambarnya
+      // buat diterusin ke user.
+      if (errTags.kode === 'CAPTCHA') throw errTags;
+      // error lain abaikan diam-diam, profilnya tetap dikirim
+    }
+  }
+
+  return {
+    nomor: profil.phoneNumber || nomor,
+    nama: profil.displayName || null,
+    jumlahTag: profil.tagCount || 0,
+    badge: hasil.result?.badge || null,
+    spam: hasil.result?.spamInfo?.degree || 'aman',
+    sisaKuota: kuota.remainingCount,
+    batasKuota: kuota.limit,
+    tags: daftarTag
+  };
 }
 
 // ==========================================
 // HANDLER BOT
 // ==========================================
-const handler = async (m, { conn, text, usedPrefix }) => {
+// antrean validasi captcha: kuncinya chat|sender (pola yang sama kayak
+// otaku). isinya nomor yang lagi dicari + sisa kesempatan jawab.
+let menunggu = {};
+
+function opsiEfem(m, groupMetadata) {
+  const dur = groupMetadata && groupMetadata.ephemeralDuration;
+  return (String(m.chat).endsWith('@g.us') && dur) ? { ephemeralExpiration: dur } : {};
+}
+
+function kirimHasil(m, conn, hasil, groupMetadata) {
+  let caption = `*${global.htki || '≡'} GetContact Search ${global.htka || '≡'}*\n\n`;
+  caption += `*Nomor:* ${hasil.nomor}\n`;
+  caption += `*Nama:* ${hasil.nama || '-'}\n`;
+  caption += `*Jumlah Tag:* ${hasil.jumlahTag}\n`;
+
+  if (hasil.tags && hasil.tags.length > 0) {
+    caption += `*Daftar Tag:*\n`;
+    hasil.tags.forEach((tag, index) => {
+      caption += `${index + 1}. ${tag}\n`;
+    });
+  }
+
+  caption += `*Badge:* ${hasil.badge || '-'}\n`;
+  caption += `*Spam:* ${hasil.spam}\n`;
+  caption += `*Sisa Kuota:* ${hasil.sisaKuota}/${hasil.batasKuota}\n\n`;
+  caption += `_© CraXID Project_`;
+
+  const efem = opsiEfem(m, groupMetadata);
+  setTimeout(() => {
+    conn.sendPresenceUpdate('composing', m.chat);
+    conn.sendMessage(m.chat, { text: caption }, { quoted: m, ...efem });
+  }, 1500);
+}
+
+// kirim gambar captcha ke user dan catat antreannya. user tinggal bales
+// teks kodenya di chat yang sama, nanti ditangkap handler.before.
+async function mulaiCaptcha(m, conn, nomor, gambar, sisa, groupMetadata) {
+  const kunci = m.chat + '|' + m.sender;
+  if (menunggu[kunci]) clearTimeout(menunggu[kunci].timeout);
+  const efem = opsiEfem(m, groupMetadata);
+
+  const data = { nomor, sisa, messageId: null, timeout: null };
+  data.timeout = setTimeout(() => {
+    delete menunggu[kunci];
+    m.reply('⏳ Waktu validasi habis, pencarian dibatalkan. Ulangi lagi perintahnya ya.', null, efem).catch(() => {});
+  }, 3 * 60 * 1000);
+  menunggu[kunci] = data;
+
+  const buf = Buffer.from(String(gambar || '').replace(/\\\//g, '/'), 'base64');
+  const terkirim = await conn.sendMessage(m.chat, {
+    image: buf,
+    caption: `🔐 Server GetContact minta validasi dulu.\n\nBalas dengan *kode yang ada di gambar ini* (cukup teks kodenya aja).\nKesempatan: ${sisa} kali. Ketik *batal* kalo nggak jadi.`
+  }, { quoted: m, ...efem });
+  if (terkirim && terkirim.key) data.messageId = terkirim.key.id;
+}
+
+const handler = async (m, { conn, text, usedPrefix, groupMetadata }) => {
   if (!text) throw `Masukkan nomor yang ingin dicari!\nContoh: ${usedPrefix || '.'}getcontact 081234567890`;
 
   try {
-    await m.reply(wait); 
+    await m.reply(wait);
 
     const hasil = await cariNomor(text);
 
@@ -162,34 +219,75 @@ const handler = async (m, { conn, text, usedPrefix }) => {
         return m.reply(`*Nomor:* ${hasil.nomor}\n*Status:* Tidak ditemukan`);
     }
 
-    let caption = `*${global.htki || '≡'} GetContact Search ${global.htka || '≡'}*\n\n`;
-    caption += `*Nomor:* ${hasil.nomor}\n`;
-    caption += `*Nama:* ${hasil.nama || '-'}\n`;
-    caption += `*Jumlah Tag:* ${hasil.jumlahTag}\n`;
-    
-    // Looping tags langsung di bawah "Jumlah Tag" kalau berhasil ditarik
-    if (hasil.tags && hasil.tags.length > 0) {
-      caption += `*Daftar Tag:*\n`;
-      hasil.tags.forEach((tag, index) => {
-        caption += `${index + 1}. ${tag}\n`;
-      });
-    }
-    
-    caption += `*Badge:* ${hasil.badge || '-'}\n`;
-    caption += `*Spam:* ${hasil.spam}\n`;
-    caption += `*Sisa Kuota:* ${hasil.sisaKuota}/${hasil.batasKuota}\n\n`;
-    caption += `_© CraXID Project_`;
-
-    setTimeout(() => {
-      conn.sendPresenceUpdate('composing', m.chat);
-      conn.sendMessage(m.chat, {
-        text: caption
-      }, { quoted: m });
-    }, 1500);
-
+    kirimHasil(m, conn, hasil, groupMetadata);
   } catch (e) {
+    if (e.kode === 'CAPTCHA' && e.gambar) {
+      return mulaiCaptcha(m, conn, text, e.gambar, 3, groupMetadata);
+    }
     m.reply(`Ada yang eror nih: ${e.message || e}`);
   }
+};
+
+// tangkap jawaban kode captcha dari user yang lagi nunggu validasi
+handler.before = async (m, { conn, groupMetadata }) => {
+  if (m.isBaileys) return;
+  const kunci = m.chat + '|' + m.sender;
+  const data = menunggu[kunci];
+  if (!data) return;
+  if (!m.text) return;
+  if (data.messageId && m.id === data.messageId) return;
+  const efem = opsiEfem(m, groupMetadata);
+
+  const jawab = m.text.trim();
+  if (/^batal$/i.test(jawab)) {
+    clearTimeout(data.timeout);
+    delete menunggu[kunci];
+    await m.reply('✅ Validasi dibatalkan.', null, efem);
+    return true;
+  }
+  // pesan yang diawali prefix perintah jangan dianggap kode
+  if (/^[.!#/]/.test(jawab)) return;
+  const kode = jawab.replace(/\s+/g, '');
+  if (!/^[a-zA-Z0-9]{3,8}$/.test(kode)) return; // bukan bentuk kode, abaikan aja
+
+  clearTimeout(data.timeout);
+  delete menunggu[kunci];
+
+  try {
+    await verifyKode(kode);
+  } catch (e) {
+    if (e.kode === 'CAPTCHA') {
+      // kode salah: server ngasih gambar baru, terusin lagi ke user
+      const sisa = data.sisa - 1;
+      if (sisa > 0 && e.gambar) {
+        await m.reply(`❌ Kode salah, ini gambar barunya.`, null, efem);
+        await mulaiCaptcha(m, conn, data.nomor, e.gambar, sisa, groupMetadata);
+      } else {
+        await m.reply('❌ Kode salah dan kesempatan habis. Ulangi lagi perintah getkontaknya ya.', null, efem);
+      }
+    } else {
+      await m.reply(`❌ Validasi gagal: ${e.message || e}`, null, efem);
+    }
+    return true;
+  }
+
+  await m.reply('✅ Validasi berhasil, mencari ulang nomornya...', null, efem);
+  try {
+    const hasil = await cariNomor(data.nomor);
+    if (hasil.tidakDitemukan) {
+      await m.reply(`*Nomor:* ${hasil.nomor}\n*Status:* Tidak ditemukan`, null, efem);
+      return true;
+    }
+    kirimHasil(m, conn, hasil, groupMetadata);
+  } catch (e) {
+    if (e.kode === 'CAPTCHA' && e.gambar) {
+      // server minta validasi lagi, mulai tantangan baru
+      await mulaiCaptcha(m, conn, data.nomor, e.gambar, 2, groupMetadata);
+    } else {
+      await m.reply(`Ada yang eror nih: ${e.message || e}`, null, efem);
+    }
+  }
+  return true;
 };
 
 handler.command = handler.help = ['getcontact', 'getkontak'];
