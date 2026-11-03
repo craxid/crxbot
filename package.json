@@ -1,6 +1,6 @@
 {
   "name": "Akebi-Bot",
-  "version": "10.19.1",
+  "version": "10.19.2",
   "description": "Lightweight WhatsApp Bot",
   "depecrated": false,
   "main": "index.js",

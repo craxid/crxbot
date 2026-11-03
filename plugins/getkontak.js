@@ -78,12 +78,12 @@ async function cariNomor(nomorHP) {
     const kuota = hasil.result?.subscriptionInfo?.usage?.search || {};
     let daftarTag = [];
 
-    // 2. TEMBUS ENDPOINT TAGS (/tags) - Khusus Free User Bypass
+    // 2. TEMBUS ENDPOINT TAG (/number-detail) - Khusus Free User Bypass
     if (profil.tagCount > 0) {
       try {
         // Ekstrak URL dasar dengan aman lalu tambahkan /tags
         const baseUrl = _cfg.u.split('/search')[0];
-        const urlTags = baseUrl + '/tags'; 
+        const urlTags = baseUrl + '/number-detail'; 
         
         // Payload murni tanpa embel-embel pagination agar tidak disangka request Premium
         const isiReqTags = { 
