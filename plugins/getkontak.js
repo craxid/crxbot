@@ -187,12 +187,15 @@ function kirimHasil(m, conn, hasil, groupMetadata) {
 
 // kirim gambar captcha ke user dan catat antreannya. user tinggal bales
 // teks kodenya di chat yang sama, nanti ditangkap handler.before.
-async function mulaiCaptcha(m, conn, nomor, gambar, sisa, groupMetadata) {
+// tantangan = urutan tantangan captcha dalam satu pencarian ini (satu
+// pencarian bisa ditantang server berkali-kali krn validasi cuma berlaku
+// per panggilan); dibatasi biar ga muter selamanya.
+async function mulaiCaptcha(m, conn, nomor, gambar, sisa, groupMetadata, tantangan = 1) {
   const kunci = m.chat + '|' + m.sender;
   if (menunggu[kunci]) clearTimeout(menunggu[kunci].timeout);
   const efem = opsiEfem(m, groupMetadata);
 
-  const data = { nomor, sisa, messageId: null, timeout: null };
+  const data = { nomor, sisa, tantangan, messageId: null, timeout: null };
   data.timeout = setTimeout(() => {
     delete menunggu[kunci];
     m.reply('⏳ Waktu validasi habis, pencarian dibatalkan. Ulangi lagi perintahnya ya.', null, efem).catch(() => {});
@@ -260,10 +263,11 @@ handler.before = async (m, { conn, groupMetadata }) => {
       // kode salah: server ngasih gambar baru, terusin lagi ke user
       const sisa = data.sisa - 1;
       if (sisa > 0 && e.gambar) {
-        await m.reply(`❌ Kode salah, ini gambar barunya.`, null, efem);
-        await mulaiCaptcha(m, conn, data.nomor, e.gambar, sisa, groupMetadata);
+        // tampilin alasan asli dari server biar jelas penolakannya krn apa
+        await m.reply(`❌ Kode ditolak server: ${e.message || 'tidak valid'}. Ini gambar barunya.`, null, efem);
+        await mulaiCaptcha(m, conn, data.nomor, e.gambar, sisa, groupMetadata, data.tantangan || 1);
       } else {
-        await m.reply('❌ Kode salah dan kesempatan habis. Ulangi lagi perintah getkontaknya ya.', null, efem);
+        await m.reply(`❌ Kode ditolak server: ${e.message || 'tidak valid'}, dan kesempatan habis. Ulangi lagi perintah getkontaknya ya.`, null, efem);
       }
     } else {
       await m.reply(`❌ Validasi gagal: ${e.message || e}`, null, efem);
@@ -281,8 +285,17 @@ handler.before = async (m, { conn, groupMetadata }) => {
     kirimHasil(m, conn, hasil, groupMetadata);
   } catch (e) {
     if (e.kode === 'CAPTCHA' && e.gambar) {
-      // server minta validasi lagi, mulai tantangan baru
-      await mulaiCaptcha(m, conn, data.nomor, e.gambar, 2, groupMetadata);
+      // validasi barusan lolos tapi panggilan berikutnya ditantang lagi
+      // (validasi GetContact cuma berlaku per panggilan). lanjutkan sesi
+      // yang sama: kesempatan ga dipotong dan ga di-reset, cuma jumlah
+      // tantangannya yang dibatasi biar ga muter selamanya.
+      const tantanganBaru = (data.tantangan || 1) + 1;
+      if (tantanganBaru > 3) {
+        await m.reply('❌ Server GetContact lagi minta validasi terus-terusan, pencarian dihentikan dulu. Coba lagi nanti ya.', null, efem);
+      } else {
+        await m.reply('🔐 Server minta validasi sekali lagi buat lanjut ambil datanya, ini gambar barunya.', null, efem);
+        await mulaiCaptcha(m, conn, data.nomor, e.gambar, data.sisa, groupMetadata, tantanganBaru);
+      }
     } else {
       await m.reply(`Ada yang eror nih: ${e.message || e}`, null, efem);
     }
